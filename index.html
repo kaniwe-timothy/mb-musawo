@@ -949,6 +949,33 @@ h1, h2, h3, h4, .page-h h2, .hello h2, .modal-h h3, .price .amt, .card.stat .v, 
 }
 @media (max-width:560px){ .es-long{ display:none; } }
 
+/* ---------- version 5 pieces ---------- */
+.sc-said{ background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+.sc-said blockquote{ margin:8px 0 10px; padding:10px 14px; border-left:4px solid #316FF6; background:var(--surface); border-radius:0 10px 10px 0; font-size:16px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.help-line{ display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--text)!important; text-decoration:none; min-width:0; }
+.help-line:hover{ border-color:#92BDF9; }
+.help-line .grow{ display:flex; flex-direction:column; min-width:0; flex:1; } .help-line small{ color:var(--muted); font-weight:700; font-size:13px; }
+.help-line > svg:last-child{ color:var(--muted); flex:none; }
+.amb-free{ border-color:rgba(229,72,77,.35)!important; }
+.amb-offer{ border:1px solid var(--line); border-radius:14px; padding:14px; background:var(--surface-2); }
+.amb-facts{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0; }
+.amb-facts > div{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px; min-width:0; }
+.amb-facts small{ display:block; color:var(--muted); font-size:12px; } .amb-facts b{ font-size:15px; }
+.amb-facts select{ width:100%; font-size:13px; }
+.amb-price{ border-top:1px dashed var(--line-2); padding-top:10px; display:grid; gap:4px; }
+@media (max-width:560px){ .amb-facts{ grid-template-columns:1fr 1fr; } .amb-facts > div:last-child{ grid-column:1/-1; } }
+.fee-range{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.fee-range > div{ background:var(--soft); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:2px; }
+.fee-range small{ color:var(--muted); font-weight:700; } .fee-range b{ color:var(--soft-ink); font-size:15px; }
+@media (max-width:420px){ .fee-range{ grid-template-columns:1fr; } }
+.lab-depts{ border:1px solid var(--line); border-radius:12px; max-height:360px; overflow:auto; }
+.lab-depts details{ border-bottom:1px solid var(--line); padding:8px 12px; } .lab-depts details:last-child{ border-bottom:0; }
+.lab-depts summary{ cursor:pointer; padding:4px 0; }
+.cc-chat{ display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding:4px; }
+.cc-msg{ align-self:flex-start; max-width:80%; background:var(--surface-2); border:1px solid var(--line); border-radius:14px 14px 14px 4px; padding:9px 12px; font-size:14px; overflow-wrap:anywhere; }
+.cc-msg.me{ align-self:flex-end; background:#1941BA; color:#fff; border-color:#1941BA; border-radius:14px 14px 4px 14px; }
+.cc-msg small{ display:block; font-weight:700; color:var(--soft-ink); font-size:11.5px; } .cc-msg span{ display:block; font-size:10.5px; opacity:.7; margin-top:3px; }
+
 </style>
 </head>
 <body>
@@ -2986,7 +3013,7 @@ const myLoc = () => S.myLoc || {lat:0.3560, lng:32.6185, label:'Plot 22, Ntinda 
 /* ---------- seed new data (works for existing saved demos too) ---------- */
 function seedV3(){
   const now=Date.now(), iso=ms=>new Date(now+ms).toISOString();
-  S.doctors.forEach(d=>d.fee=CONSULT_FEE);
+  S.doctors.forEach(d=>{ if(!d.fee) d.fee=CONSULT_FEE; });
   if(!S.ambulances) S.ambulances=[
     {id:'AMB-01', plate:'UAX 214K', branch:'ntd', type:'Advanced life support', driver:'Sam Okello', phone:'+256 772 300 101', crew:'Paramedic Ruth Akello', status:'Available', lat:0.3545, lng:32.6160},
     {id:'AMB-02', plate:'UBA 532Q', branch:'ntd', type:'Basic life support', driver:'Isaac Waswa', phone:'+256 772 300 102', crew:'Nurse Moses Kato', status:'On job', lat:0.3600, lng:32.6200},
@@ -3765,6 +3792,372 @@ function phonePreview(){
   <div class="pv-float f2">${ic('receipt')}<span><b>Paid UGX 35,000</b><small>Airtel Money · receipt ready</small></span></div>`;
 }
 for(const [k,lg,sw] of [['Services','Obuweereza','Huduma'],['Upcoming appointment','Olunaku lw’okulaba omusawo','Miadi ijayo']]){ if(I18N.lg) I18N.lg[k]=lg; if(I18N.sw) I18N.sw[k]=sw; }
+
+</script>
+<script>
+/* MB Musawo — version 5 changes from the client brief:
+   symptom checker reads the patient's own words; prescription photos and forwarding; pharmacy by price and distance;
+   map and phone location; East African helplines; free emergency services first; priced ambulances with consent and payment before dispatch;
+   offline copies; doctor fees and payouts; hospital-only services; lab tests by department; wholesale licences; customer care; provider fees. */
+
+/* =================== sample data =================== */
+function seedV5(){
+  if(S.v5) return; S.v5=1;
+  const extraPh=[
+    {id:'p4',name:'Kampala Road Pharmacy',area:'Kampala Central',lat:0.3136,lng:32.5811},
+    {id:'p5',name:'Kira Health Pharmacy',area:'Kira',lat:0.3970,lng:32.6390},
+    {id:'p6',name:'Najjera Community Chemist',area:'Najjera',lat:0.3780,lng:32.6250}];
+  extraPh.forEach(p=>{ if(!S.pharmacies.find(x=>x.id===p.id)) S.pharmacies.push({...p,nda:true}); });
+  const meta={p1:{area:'Ntinda',mult:1.00,deliv:4000,eta:'25–40 min',retail:'NDA/RP/2025/0418',whole:'NDA/WP/2025/0112'},
+              p2:{area:'Kisementi',mult:1.08,deliv:6000,eta:'35–50 min',retail:'NDA/RP/2025/0733',whole:null},
+              p3:{area:'Bukoto',mult:0.94,deliv:5000,eta:'30–45 min',retail:'NDA/RP/2024/0961',whole:null},
+              p4:{area:'Kampala Central',mult:0.90,deliv:8000,eta:'45–70 min',retail:'NDA/RP/2025/1204',whole:'NDA/WP/2024/0087'},
+              p5:{area:'Kira',mult:0.97,deliv:7000,eta:'40–60 min',retail:'NDA/RP/2025/0512',whole:null},
+              p6:{area:'Najjera',mult:1.03,deliv:5000,eta:'30–45 min',retail:'NDA/RP/2026/0044',whole:null}};
+  const coords={p2:[0.3262,32.5905],p3:[0.3488,32.5975]};
+  S.pharmacies.forEach(p=>{ Object.assign(p, meta[p.id]||{mult:1,deliv:6000,eta:'40–60 min',retail:'NDA/RP/—',whole:null}); if(!p.lat&&coords[p.id]){ p.lat=coords[p.id][0]; p.lng=coords[p.id][1]; } });
+  /* more laboratory tests so every department has a real list */
+  [['ESR','Erythrocyte sedimentation rate (ESR)','Haematology',6000],['BGRP','Blood group and Rhesus','Haematology',8000],['SCT','Sickle cell test','Haematology',15000],['PTINR','Prothrombin time / INR','Haematology',30000],['PBF','Peripheral blood film','Haematology',15000],
+   ['LIPID','Lipid profile','Clinical chemistry',45000],['ELEC','Electrolytes (Na, K, Cl)','Clinical chemistry',35000],['URIC','Uric acid','Clinical chemistry',15000],['RBG','Random blood glucose','Clinical chemistry',5000],
+   ['BCS','Blood culture and sensitivity','Microbiology',60000],['GRAM','Gram stain','Microbiology',10000],['UCS','Urine culture and sensitivity','Microbiology',40000],['XPERT','Sputum GeneXpert (TB)','Microbiology',0],
+   ['HPYL','H. pylori antigen (stool)','Immunology',25000],['PSA','Prostate-specific antigen (PSA)','Immunology',45000],['STOOLM','Stool for ova and parasites','Parasitology',8000]]
+   .forEach(([code,name,dept,price])=>{ if(!S.tests.find(t=>t.code===code)) S.tests.push({code,name,dept,price,tat:dept==='Microbiology'?48:2,unit:'',range:'',type:'qual'}); });
+  /* doctors: each sets their own fees; some work in hospitals, some independently */
+  const fees=[[35000,80000],[50000,120000],[40000,100000],[45000,100000],[30000,70000],[60000,150000],[35000,90000],[25000,60000],[40000,90000],[50000,110000]];
+  S.doctors.forEach((d,i)=>{ const f=fees[i%fees.length]; d.fee=f[0]; d.homeFee=f[1];
+    const indep=['d5','d8'].includes(d.id);
+    d.facility = indep ? null : {name:'MB Musawo Hospital '+((S.branches.find(b=>b.id===d.branch)||S.branches[0]).name), area:((S.branches.find(b=>b.id===d.branch)||S.branches[0]).city)};
+    d.payout = d.payout || (i%3===0?{type:'Mobile money',detail:'MTN MoMo · +256 77• ••• 4'+(10+i)}:i%3===1?{type:'Bank',detail:'Stanbic Bank · ••••'+(4021+i)}:{type:'App wallet',detail:'MB Musawo wallet'}); });
+  /* ambulance prices (each hospital sets its own) */
+  S.ambPrice = S.ambPrice || {ntd:{base:50000,km:3000},klo:{base:60000,km:3500},ebb:{base:45000,km:3000},gul:{base:40000,km:2500},mbr:{base:40000,km:2500},jja:{base:40000,km:2500}};
+  /* customer care conversations */
+  S.support = S.support || [{id:'CC-1001',who:'Grace Atim',role:'Patient',topic:'Payment shows pending',at:new Date(Date.now()-3.6e6).toISOString(),status:'Open',msgs:[{from:'u',text:'I paid with Airtel Money but the app still says pending.',at:new Date(Date.now()-3.6e6).toISOString()}]},
+    {id:'CC-1000',who:'Dr. Agnes Auma',role:'Doctor',topic:'Cannot upload licence',at:new Date(Date.now()-8.6e7).toISOString(),status:'Solved',msgs:[{from:'u',text:'The licence upload keeps failing.',at:new Date(Date.now()-8.6e7).toISOString()},{from:'s',name:'Brian (IT support)',text:'Fixed — please try again, the file limit is now 10 MB.',at:new Date(Date.now()-8.5e7).toISOString()}]}];
+  S.rxUploads = S.rxUploads || [];
+  /* a prescription waiting for the patient, sent by a doctor and one forwarded by a nurse */
+  if(!S.prescriptions.find(r=>r.id==='RX-3310')) S.prescriptions.unshift({id:'RX-3310',pid:ME,did:'d1',items:[{drug:'Amoxicillin 500mg',dose:'1 capsule',freq:'Three times daily',dur:'5 days',qty:15},{drug:'Paracetamol 500mg',dose:'2 tablets',freq:'When needed, up to 4 times a day',dur:'3 days',qty:12}],at:new Date(Date.now()-5.4e6).toISOString(),status:'Sent to patient',filled:false,pharmacy:'p1',chosenBy:'Doctor'});
+  if(!S.prescriptions.find(r=>r.id==='RX-3311')) S.prescriptions.unshift({id:'RX-3311',pid:ME,did:null,nurse:'Nurse Florence Akello',items:[{drug:'Ferrous sulphate + folic acid',dose:'1 tablet',freq:'Once daily',dur:'30 days',qty:30}],at:new Date(Date.now()-2.2e7).toISOString(),status:'Forwarded by nurse',filled:false,pharmacy:null,chosenBy:null});
+  S.premium = true; /* no patient subscriptions any more: every patient feature is free */
+  save();
+}
+seedV5();
+{ const rd=A.resetDemo; A.resetDemo=()=>{ rd(); seedV5(); }; }
+
+const kmTo = (a,b) => { if(!a||!b||a.lat==null||b.lat==null) return 0; const R_=6371, dLa=(b.lat-a.lat)*Math.PI/180, dLo=(b.lng-a.lng)*Math.PI/180; const x=Math.sin(dLa/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLo/2)**2; return Math.round(R_*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))*10)/10; };
+const whoSent = r => r.did ? doc(r.did).name : (r.nurse||'Health worker');
+
+/* =================== 1. symptom checker: the patient's own words =================== */
+const EXTRA_KW = {
+  fever:/feverish|i feel hot|hot and cold|sweating at night|night sweats|body is hot/i,
+  head:/dizzy head|pain in (my )?head|pressure in (my )?head|forehead/i,
+  cough:/cough|coughing|phlegm|sputum|breath|breathless|wheez|asthma|chest is tight|flu|a cold|common cold|runny nose|sneez|sore throat|throat|catarrh|blocked nose|okukolola|kifuba|kikohozi/i,
+  chest:/chest pain|chest hurts|heart (is )?(racing|beating fast|pounding)|palpitation|pain in (my )?chest/i,
+  stomach:/stomach|tummy|belly|abdom|ulcer|heartburn|acid|gastric|indigestion|bloat|constipat|olubuto|tumbo/i,
+  diarr:/diarr|loose (stool|motion)|running stomach|vomit|throwing up|nause|feel sick|okusesema|kuhara|kutapika/i,
+  urine:/urin|pee|peeing|burning when|bladder|kidney|okufuka|mkojo/i,
+  sti:/discharge|private part|genital|itching down|sore on (my )?(penis|vagina)|std|sti\b|syphilis|gonorr/i,
+  preg:/pregnan|missed (my )?period|late period|baby kicking|bleeding in pregnancy|lubuto|mimba/i,
+  fp:/family planning|contracep|condom|implant|injection to prevent|pills to prevent|iud|coil|prevent pregnancy/i,
+  skin:/rash|itch|spots|pimple|acne|skin|ringworm|boil|swelling on (my )?skin|olususu|ngozi|upele/i,
+  child:/my (baby|child|son|daughter|kid)|infant|toddler|newborn|mwana|omwana/i,
+  mental:/stress|anxious|anxiety|worried|depress|sad|cannot sleep|can'?t sleep|insomnia|panic|lonely|hopeless|crying|suicid|self.?harm/i,
+  eye:/eye|vision|cannot see|can'?t see|blurr|red eye|amaaso|macho/i,
+  sugar:/thirst|sugar|diabet|losing weight|weight loss|urinat(e|ing) a lot|always hungry/i,
+  bp:/dizz|faint|blood pressure|pressure is high|bp\b|light.?headed|room spinning/i,
+  pain:/back (pain|hurts|aches?)|my back|lower back|(knee|leg|arm|neck|shoulder|hip|foot|feet|hand)s? (hurts?|pain|aches?)|backache|joint|knee|neck pain|shoulder|waist|hip|arthrit|muscle|body pain|ache all over|omugongo|mgongo/i,
+  injury:/injur|wound|cut myself|burn|burnt|fell|fall|accident|fracture|broken|sprain|bite|bleeding from|ekiwundu|jeraha/i};
+const PLAIN_CAUSES = {
+  fever:['An infection somewhere in the body (from a mosquito bite, germs in food or water, or a virus)','The body raising its temperature to fight germs'],
+  head:['Stress, tiredness or not enough sleep','Not drinking enough water or skipping meals','Raised blood pressure','An infection that also causes fever'],
+  cough:['Germs (viruses or bacteria) in the throat, airways or lungs','Dust, smoke or allergies irritating the airways','Narrowed airways, as in asthma'],
+  chest:['Strain of the chest muscles or ribs','Acid coming up from the stomach','The heart not getting enough blood (needs urgent checking)','Infection or a clot in the lungs (needs urgent checking)'],
+  stomach:['Stomach acid or a stomach ulcer','Germs from food or water','Gas or constipation','Problems in organs such as the gall bladder, appendix, womb or kidneys'],
+  diarr:['Germs from unsafe food or water','A virus passing through the gut','Some foods or medicines the body does not agree with'],
+  urine:['Germs in the bladder or urine passage','A sexually transmitted infection','Not drinking enough water','Kidney stones'],
+  sti:['An infection passed during sex','An imbalance of the normal germs in the vagina (not always from sex)'],
+  preg:['Normal changes in pregnancy','A pregnancy problem that needs checking (bleeding, high blood pressure, infection)'],
+  fp:['Wanting to plan or space children','Side effects of a method you are using'],
+  skin:['Contact with something that irritates the skin','Fungus, mites (scabies) or bacteria on the skin','An allergy, including to something you ate or took'],
+  child:['Infections are the most common reason children fall sick (malaria, chest infection, diarrhoea)','Not drinking or feeding enough'],
+  mental:['Pressure at home, work, school or with money','Loss, grief or a difficult event','Changes in the brain’s chemistry, which are common and treatable'],
+  eye:['Germs or allergy causing red or itchy eyes','Dust or an object in the eye','Changes in eyesight with age','Raised pressure inside the eye'],
+  sugar:['The body not using sugar well (diabetes)','An overactive thyroid gland','Some long-term infections'],
+  bp:['Standing up quickly or not drinking enough','Blood pressure that is too high or too low','Low blood sugar','Inner ear problems'],
+  pain:['Strain from lifting, posture or heavy work','Wear of the joints with age','Inflammation of the joints','An injury'],
+  injury:['A cut, bruise, sprain or broken bone from the injury','Germs getting into a wound'],
+  general:['Many things can cause how you feel. A health worker will ask more questions and examine you.']};
+const SPEC_WHY = {'General Practitioner':'A general doctor checks the whole body and refers you to a specialist if needed.','Paediatrician':'A children’s doctor is best for babies and children.','Obstetrician & Gynaecologist':'A doctor for women’s health, pregnancy and childbirth.','Cardiologist':'A heart specialist.','Dermatologist':'A skin specialist.','Endocrinologist':'A specialist for sugar (diabetes) and hormones.','Ophthalmologist':'An eye specialist.','Psychiatrist':'A doctor for mental health. You can also talk to a counsellor.','Sexual & Reproductive Health':'A clinician for sexual health and family planning — private and confidential.'};
+if(!KB.find(k=>k.id==='general')) KB.push({id:'general',label:'Something else / not sure',icon:'help-circle',kw:/^$/,base:3,spec:'General Practitioner',tests:[],causes:['Needs a health worker to ask more questions'],qs:[{id:'dur',q:'How long have you felt like this?',o:[['Less than 2 days',{}],['2–7 days',{}],['More than a week',{l:2}]]},{id:'sev',q:'How bad is it?',o:[['Mild — I can do my normal work',{}],['Moderate — it stops some activities',{l:3}],['Severe — I cannot do my normal activities',{l:2}]]}],care:[],watch:['You get worse quickly','You cannot eat or drink','Confusion, fainting or difficulty breathing']});
+
+function scAll(text){ const ids=[]; KB.forEach(k=>{ if(k.id==='general') return; if((k.kw&&k.kw.test(text))||(EXTRA_KW[k.id]&&EXTRA_KW[k.id].test(text))) ids.push(k.id); }); return ids; }
+function scFacts(text){ const f=[]; const num='(\\d+|one|two|three|four|five|six|seven|a|an|few|several)';
+  const d=text.match(new RegExp(num+'\\s*(hour|day|week|month|year)s?','i')); if(d) f.push(['How long',d[0]]);
+  if(/since (yesterday|last night|this morning|morning|last week)/i.test(text)) f.push(['Since',text.match(/since (yesterday|last night|this morning|morning|last week)/i)[1]]);
+  const sev=text.match(/\b(very|severe|serious|terrible|unbearable|mild|slight|a little|worse|getting worse|on and off|comes and goes)\b/i); if(sev) f.push(['How bad',sev[0]]);
+  const who=text.match(/\bmy (baby|child|son|daughter|mother|father|wife|husband|grandmother|grandfather)\b/i); if(who) f.push(['Who is sick',who[0]]);
+  const t=text.match(/(\d{2}(\.\d)?)\s*(°|degrees|c\b)/i); if(t) f.push(['Temperature',t[0]]);
+  return f; }
+
+const _scText = A.scText;
+A.scText = (ctx, text) => {
+  const raw=(text||''); const st=scState(ctx); if(!raw.trim()) return;
+  st.text=raw; st.facts=scFacts(raw);
+  if(EMERGENCY_RX.test(raw)) { _scText(ctx, raw); const s2=scState(ctx); s2.text=raw; s2.facts=scFacts(raw); s2.extra=scAll(raw).filter(x=>x!==s2.cid); save(); rerender(); return; }
+  const all=scAll(raw); const kids=all.includes('child');
+  const main = kids ? 'child' : (all[0]||'general');
+  st.extra = all.filter(x=>x!==main);
+  save(); A.scPick(ctx, main);
+  const s3=scState(ctx); s3.text=raw; s3.facts=scFacts(raw); s3.extra=all.filter(x=>x!==main); save();
+};
+
+const _symptomChecker = symptomChecker;
+window.symptomChecker = symptomChecker = function(ctx){
+  const st=scState(ctx); if(st.step!=='result') return _symptomChecker(ctx);
+  const pub=ctx==='pub'; const r=scCompute(st); const L=LEVELS[r.lvl]; const k=scKB(st.cid);
+  const said = st.text ? st.text : k.label;
+  const answers=(k.qs||[]).filter(q=>st.answers[q.id]!=null).map(q=>[q.q, q.o[st.answers[q.id]][0]]);
+  const extra=(st.extra||[]).map(scKB).filter(Boolean);
+  const cause=(PLAIN_CAUSES[st.cid]||PLAIN_CAUSES.general);
+  const conds=r.causes.filter(c=>!/emergency|talk to someone/i.test(c)||r.lvl===1);
+  return `<div class="card">
+    <div class="note ${r.lvl===1?'red':r.lvl<=3?'warn':'green'} mb" style="padding:16px"><span class="ic ${L.c}" style="width:44px;height:44px">${ic(L.i)}</span><div><div style="font-size:19px;font-weight:800">${L.k}</div><div>${L.t}</div></div></div>
+    ${r.lvl===1?`<div class="row wrap mb"><a class="btn red lg" href="#/${pub?'emergency':'app/p/ambulance'}">${ic('siren')} Get emergency help</a></div>`:''}
+    <div class="sc-said"><div class="small muted" style="font-weight:700">WHAT YOU TOLD US — EXACTLY AS YOU WROTE IT</div><blockquote>${esc(said)}</blockquote>
+      ${(st.facts||[]).length?`<div class="row wrap" style="gap:6px">${st.facts.map(([a,b])=>`<span class="badge">${a}: ${esc(b)}</span>`).join('')}</div>`:''}
+      ${answers.length?`<div class="small mt">${answers.map(([q,a])=>`<div><span class="muted">${esc(q)}</span> — <b>${esc(a)}</b></div>`).join('')}</div>`:''}
+      ${(st.profile&&st.profile.age)?`<div class="small muted mt">For: ${(AGE.find(a=>a[0]===st.profile.age)||[,''])[1]}${st.profile.sex?' · '+(st.profile.sex==='F'?'female':'male'):''}${st.profile.preg?' · pregnant':''}</div>`:''}
+    </div>
+    <div class="grid g2 mt">
+      <div class="card flat"><h4>${ic('search')} Possible causes</h4><p class="small muted" style="margin:0 0 6px">Why someone may feel this way</p><ul class="small t2" style="padding-left:18px;margin:0">${cause.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>
+      <div class="card flat"><h4>${ic('list')} Possible conditions</h4><p class="small muted" style="margin:0 0 6px">Only a health worker can confirm. This is not a diagnosis.</p><ul class="small t2" style="padding-left:18px;margin:0">${conds.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>
+      ${extra.map(e=>`<div class="card flat"><h4>${ic(e.icon||'plus')} You also mentioned: ${e.label.toLowerCase()}</h4><ul class="small t2" style="padding-left:18px;margin:0">${e.causes.slice(0,3).map(c=>`<li>${esc(c)}</li>`).join('')}</ul><div class="small mt">Who to see: <b>${e.spec}</b></div></div>`).join('')}
+      <div class="card flat"><h4>${ic('stethoscope')} Who you should consult: ${r.spec}</h4><p class="small muted" style="margin:0 0 6px">${SPEC_WHY[r.spec]||''}</p>${r.docs.map(d=>`<div class="li">${av(d.name,'sm')}<div class="grow"><div class="t small">${d.name}</div><div class="s">${d.spec} · ${ugx(d.fee)}${d.types.includes('Video')?' · video':''}</div></div><a class="btn sm" href="${pub?'#/signin':'#/app/p/book/'+d.id}">Book</a></div>`).join('')}</div>
+      <div class="card flat" style="border-color:rgba(229,72,77,.35)"><h4 style="color:var(--red)">${ic('alert-triangle')} Go to a hospital at once if</h4><ul class="small t2" style="padding-left:18px;margin:0">${(k.watch||[]).map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>
+    </div>
+    <div class="note mt">${ic('pill')}<div><b>No medicines are suggested here.</b> Only a doctor, nurse or pharmacist who has assessed you should give medicine.</div></div>
+    <div class="row wrap mt">${pub?`<a class="btn" href="#/register">${ic('save')} Create a free account to save this</a>`:`<button class="btn" onclick="A.scSave('${ctx}')">${ic('save')} Save to my records</button><button class="btn ghost" onclick="A.scSave('${ctx}',true)">${ic('send')} Send to a doctor</button>`}<button class="btn ghost" onclick="A.scReset('${ctx}')">${ic('rotate-ccw')} Start again</button></div>
+  </div>`;
+};
+
+/* =================== 2. medicines: prescriptions, photo upload, forwarding, pharmacy by price and distance =================== */
+function pharmQuote(p, cart){ const sub=Object.entries(cart).reduce((s,[id,n])=>s+Math.round(med(id).price*p.mult/100)*100*n,0); const km=kmTo(myLoc(),p); const deliv=Math.round((p.deliv+km*1000)/500)*500; return {sub,km,deliv,total:sub+deliv}; }
+function pharmacyPicker(cart, ctx){
+  const sort=S.tabs.phsort||'cheap'; const list=S.pharmacies.map(p=>({p,...pharmQuote(p,cart)})).sort((a,b)=>sort==='near'?a.km-b.km:a.total-b.total);
+  if(!S.tabs.phsel || !S.pharmacies.find(p=>p.id===S.tabs.phsel)) S.tabs.phsel=list[0].p.id;
+  const me_=myLoc(); const mid='phmap'+(ctx||'');
+  leaflet(mid,[me_.lat,me_.lng],12,[{lat:me_.lat,lng:me_.lng,color:'#E5484D',r:10,popup:'You — delivery here'},...S.pharmacies.map(p=>({lat:p.lat,lng:p.lng,color:p.id===S.tabs.phsel?'#1941BA':'#92BDF9',popup:p.name}))]);
+  return `<div class="card mb"><div class="row between wrap"><h3 style="margin:0">${ic('store')} Choose a pharmacy</h3><div class="seg" role="group"><button class="${sort==='cheap'?'on':''}" onclick="S.tabs.phsort='cheap';save();rerender()">Cheapest</button><button class="${sort==='near'?'on':''}" onclick="S.tabs.phsort='near';save();rerender()">Nearest</button></div></div>
+    <div class="row wrap mt" style="gap:8px"><span class="small">${ic('map-pin')} Delivery to: <b>${esc(me_.label)}</b></span><button class="btn sm ghost" onclick="A.locate()">${ic('locate-fixed')} Use my phone’s location</button></div>
+    <div id="${mid}" class="map mt" style="height:220px;border-radius:12px"></div>
+    <div class="mt">${list.map(x=>`<label class="role-card mb ${S.tabs.phsel===x.p.id?'on':''}" style="cursor:pointer"><input type="radio" name="phs" hidden onchange="S.tabs.phsel='${x.p.id}';save();rerender()"><span class="ic blue">${ic('store')}</span><span class="grow">${x.p.name}<small>${x.km} km away · ${x.p.area} · delivery ${x.p.eta}</small></span><span style="text-align:right"><b>${Object.keys(cart).length?ugx(x.total):ugx(x.deliv)}</b><small class="muted" style="display:block">${Object.keys(cart).length?'medicines + delivery':'delivery fee'}</small></span></label>`).join('')}</div>
+    <p class="small muted mb0">Prices differ between pharmacies. Delivery is charged by distance from your location.</p></div>`;
+}
+R['p/medicine'] = () => {
+  const cart=S.tabs.cart||{}; const q=(S.tabs.medq||'').toLowerCase();
+  const myRx=S.prescriptions.filter(r=>r.pid===ME&&!r.filled);
+  const ups=S.rxUploads.filter(u=>u.pid===ME);
+  const items=S.meds.filter(m=>!q||m.name.toLowerCase().includes(q)||m.cat.toLowerCase().includes(q));
+  const ph_=S.pharmacies.find(p=>p.id===S.tabs.phsel)||S.pharmacies[0]; const qt=pharmQuote(ph_,cart);
+  const orders=S.drugOrders.filter(o=>o.pid===ME);
+  return ph('Care','Medicines',`<input class="inp" style="width:220px" placeholder="Search medicines" value="${esc(S.tabs.medq||'')}" onchange="S.tabs.medq=this.value;rerender()">`) +
+  `<div class="card mb"><div class="row between wrap"><h3 style="margin:0">${ic('file-text')} My prescriptions</h3>
+     <label class="btn">${ic('camera')} Upload a photo of my prescription<input type="file" accept="image/*" hidden onchange="A.rxPhoto(this)"></label></div>
+    ${myRx.length||ups.length?'':'<p class="muted small mt">No prescriptions yet. When a doctor or nurse sends you one, it appears here.</p>'}
+    ${myRx.map(r=>{ const pp=S.pharmacies.find(p=>p.id===r.pharmacy); return `<div class="li" style="align-items:flex-start;flex-wrap:wrap"><span class="ic blue">${ic('file-signature')}</span><div class="grow" style="min-width:200px"><div class="t">${r.id} · from ${whoSent(r)}</div><div class="s">${r.items.map(i=>`${i.drug} — ${i.dose}, ${i.freq}, ${i.dur}`).join('<br>')}</div><div class="s mt">${pp?`Pharmacy: <b>${pp.name}</b> (chosen by ${r.chosenBy==='Patient'?'you':r.chosenBy?.toLowerCase()||'—'})`:'<span class="badge amber">Choose a pharmacy</span>'}</div></div>
+      <div class="row wrap" style="gap:6px"><button class="btn sm" onclick="A.rxForward('${r.id}')">${ic('send')} ${pp?'Change pharmacy / send':'Forward to a pharmacy'}</button></div></div>`; }).join('')}
+    ${ups.map(u=>`<div class="li"><img src="${u.img}" alt="Prescription photo" style="width:56px;height:56px;object-fit:cover;border-radius:10px"><div class="grow"><div class="t">Photo uploaded ${fdt(u.at)}</div><div class="s">${u.pharmacy?'Sent to '+(S.pharmacies.find(p=>p.id===u.pharmacy)||{}).name+' — the pharmacist will check it and call you':'Not sent yet'}</div></div>${u.pharmacy?'<span class="badge green">Sent</span>':`<button class="btn sm" onclick="A.upForward('${u.id}')">Send to pharmacy</button>`}</div>`).join('')}
+  </div>
+  ${orders.length?`<div class="card mb"><h3>My orders</h3>${orders.map(o=>`<div class="li"><span class="ic green">${ic('package')}</span><div class="grow"><div class="t">${o.id} · ${(o.items||[]).map(([id,n])=>med(id).name.split(' ')[0]+' ×'+n).join(', ')}</div><div class="s">${o.pharmacy?(S.pharmacies.find(p=>p.id===o.pharmacy)||{}).name+' · ':''}${o.delivery} · ${o.pay} · ${fdt(o.at)}</div></div>${badgeFor(o.status)}</div>`).join('')}</div>`:''}
+  ${pharmacyPicker(cart)}
+  <div class="grid g-21"><div class="grid g2">${items.map(m=>{ const pr=Math.round(m.price*ph_.mult/100)*100; return `<div class="card"><div class="row between"><span class="badge ${m.rx?'red':'green'}">${m.rx?'Prescription only':'Over the counter'}</span><span class="small muted">${m.cat}</span></div><h4 class="mt">${m.name}</h4><div class="small muted">${m.stock>0?'In stock':'Out of stock'} at ${ph_.name}</div><div class="row between mt"><b>${ugx(pr)}</b><div class="row"><button class="icon-btn" style="width:34px;height:34px" aria-label="Less" onclick="A.cart('${m.id}',-1)">${ic('minus')}</button><b>${cart[m.id]||0}</b><button class="icon-btn" style="width:34px;height:34px" aria-label="More" onclick="A.cart('${m.id}',1)">${ic('plus')}</button></div></div></div>`; }).join('')}</div>
+  <div class="card" style="align-self:start;position:sticky;top:80px"><h3>${ic('shopping-cart')} Your order</h3>${Object.keys(cart).length?Object.entries(cart).map(([id,n])=>`<div class="row between small" style="padding:4px 0"><span>${med(id).name} ×${n}</span><b>${ugx(Math.round(med(id).price*ph_.mult/100)*100*n)}</b></div>`).join(''):'<p class="muted small">Empty</p>'}
+    <div class="divider"></div><div class="small">Pharmacy: <b>${ph_.name}</b> · ${qt.km} km</div>
+    <div class="field mt"><label for="deliv">Delivery</label><select class="inp" id="deliv"><option value="boda">Boda delivery to my location (+${ugx(qt.deliv)})</option><option value="collect">Collect in store (free)</option></select></div>
+    ${Object.keys(cart).some(id=>med(id).rx)?`<div class="field"><label for="rxsel">Prescription</label><select class="inp" id="rxsel">${myRx.map(r=>`<option value="${r.id}">${r.id} — ${whoSent(r)}</option>`).join('')}${ups.map(u=>`<option value="${u.id}">Uploaded photo ${fdt(u.at)}</option>`).join('')}</select><div class="small muted">Prescription-only medicines need a valid prescription.</div></div>`:''}
+    <div class="row between"><b>Total</b><b>${ugx(qt.sub+(qt.sub?qt.deliv:0))}</b></div>
+    <button class="btn green block mt" ${qt.sub?'':'disabled'} onclick="A.orderMeds()">Order & pay</button></div></div>`;
+};
+A.orderMeds = () => { const c=S.tabs.cart||{}; const ph_=S.pharmacies.find(p=>p.id===S.tabs.phsel)||S.pharmacies[0]; const qt=pharmQuote(ph_,c); const how=$('#deliv').value; const rx=$('#rxsel')?.value;
+  if(Object.keys(c).some(id=>med(id).rx) && !rx) return toast('Add a prescription first — upload a photo or use one from your doctor.','red');
+  const total=qt.sub+(how==='boda'?qt.deliv:0);
+  A.pay(total,'Medicines from '+ph_.name,(ref,method)=>{ const id=uid('DO'); S.drugOrders.unshift({id,pid:ME,items:Object.entries(c),pharmacy:ph_.id,status:'Received',delivery:how==='boda'?'Boda delivery to '+myLoc().label:'Collect in store',pay:method,rxId:rx||null,at:new Date().toISOString(),loc:myLoc()}); S.tabs.cart={}; audit('Medicine order placed',id); save(); toast('Order sent to '+ph_.name+'. You’ll get an SMS at each step.','green'); rerender(); },{cash:true}); };
+A.rxPhoto = input => { const f=input.files&&input.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const s=Math.min(1,900/Math.max(im.width,im.height)); const cv=document.createElement('canvas'); cv.width=im.width*s; cv.height=im.height*s; cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+  S.rxUploads.unshift({id:uid('UP'),pid:ME,img:cv.toDataURL('image/jpeg',.72),at:new Date().toISOString(),pharmacy:null}); save(); toast('Prescription photo saved. Now send it to a pharmacy.','green'); rerender(); }; im.src=rd.result; }; rd.readAsDataURL(f); };
+const phOptions = sel => S.pharmacies.map(p=>{ const km=kmTo(myLoc(),p); return `<option value="${p.id}" ${p.id===sel?'selected':''}>${p.name} — ${km} km · prices ${p.mult<1?'lower':p.mult>1.02?'higher':'average'}</option>`; }).join('');
+A.rxForward = id => { const r=S.prescriptions.find(x=>x.id===id); modal('Send prescription '+id+' to a pharmacy', `<p class="small">From ${whoSent(r)}. ${r.chosenBy==='Doctor'?'Your doctor suggested a pharmacy. You can keep it or choose another one.':''}</p><div class="field"><label for="fwph">Pharmacy</label><select class="inp" id="fwph">${phOptions(r.pharmacy||S.tabs.phsel)}</select></div>`,
+  `<button class="btn" onclick="A.rxFwdGo('${id}')">${ic('send')} Send</button>`); };
+A.rxFwdGo = id => { const r=S.prescriptions.find(x=>x.id===id); r.pharmacy=$('#fwph').value; r.chosenBy='Patient'; r.status='Sent to pharmacy'; const p=S.pharmacies.find(x=>x.id===r.pharmacy);
+  if(r.did) notify('doc:'+r.did, `${pat(ME).name} sent prescription ${id} to ${p.name}.`, '#/app/d/rx','rx'); audit('Prescription forwarded to pharmacy', id); closeModal(); save(); toast('Sent to '+p.name+'. The pharmacy will confirm price and delivery.','green'); rerender(); };
+A.upForward = id => { const u=S.rxUploads.find(x=>x.id===id); modal('Send the photo to a pharmacy', `<div class="field"><label for="fwph">Pharmacy</label><select class="inp" id="fwph">${phOptions(S.tabs.phsel)}</select></div><p class="small muted">A licensed pharmacist checks every photo before giving prescription-only medicine.</p>`, `<button class="btn" onclick="(()=>{const u=S.rxUploads.find(x=>x.id==='${id}');u.pharmacy=$('#fwph').value;save();closeModal();toast('Photo sent to the pharmacy','green');rerender();})()">${ic('send')} Send</button>`); };
+
+/* =================== 3. offline copies =================== */
+R['p/offline'] = () => { const lo=(S.labOrders||[]).filter(o=>o.pid===ME); const lr=(S.labRequests||[]).filter(o=>o.pid===ME); const rx=S.prescriptions.filter(r=>r.pid===ME); const rd=(S.readings||[]).filter(r=>!r.pid||r.pid===ME);
+  const tn=c=>(S.tests.find(t=>t.code===c)||{}).name||c;
+  return ph('My health','Saved on this phone') + `<div class="note ${S.offline?'warn':'green'} mb">${ic(S.offline?'wifi-off':'check-circle')}<div>${S.offline?'<b>You are offline.</b> Everything on this page still works — it is saved on your phone.':'These are saved on your phone, so you can open them <b>without data or internet</b>. They update when you are online.'} Last updated ${fdt(new Date().toISOString())}.</div></div>
+  <div class="grid g2">
+    <div class="card"><h3>${ic('file-check')} Lab results</h3>${lo.length?lo.map(o=>`<div class="li"><div class="grow"><div class="t small">${o.tests.map(tn).join(', ')}</div><div class="s">${o.id} · ${o.status}</div></div><a class="btn sm ghost" href="#/app/p/records">Open</a></div>`).join(''):'<p class="muted small">No results yet.</p>'}</div>
+    <div class="card"><h3>${ic('file-signature')} Prescriptions</h3>${rx.map(r=>`<div class="li"><div class="grow"><div class="t small">${r.id} · ${whoSent(r)}</div><div class="s">${r.items.map(i=>i.drug+' — '+i.dose+', '+i.freq).join('<br>')}</div></div></div>`).join('')||'<p class="muted small">None.</p>'}</div>
+    <div class="card"><h3>${ic('clipboard-list')} Lab requests</h3>${lr.map(r=>`<div class="li"><div class="grow"><div class="t small">${(r.tests||[]).map(tn).join(', ')}</div><div class="s">${r.id} · ${r.status||'Requested'}</div></div></div>`).join('')||'<p class="muted small">None.</p>'}</div>
+    <div class="card"><h3>${ic('activity')} Vitals</h3>${rd.slice(0,6).map(v=>`<div class="row between small" style="padding:5px 0;border-bottom:1px solid var(--line)"><span>${v.type||v.kind||'Reading'}</span><b>${v.value||v.v||(v.sys?v.sys+'/'+v.dia:'')} ${v.unit||''}</b></div>`).join('')||'<p class="muted small">No readings yet. <a href="#/app/p/vitals">Add one</a>.</p>'}</div>
+  </div>`; };
+
+/* =================== 4. emergency helplines (East Africa) =================== */
+const EA_HELP = {
+  UG:{name:'Uganda',lines:[['Police and all emergencies','999 or 112','shield',1],['Uganda Red Cross (free ambulance line)','0800 211 088','cross',1],['Child helpline (Sauti)','116','baby',1],['Fire and rescue','999 or 112','flame',1],['MB Musawo hospital ambulances (paid)','0800 100 066','ambulance',0]]},
+  KE:{name:'Kenya',lines:[['Police and all emergencies','999 or 112','shield',1],['Kenya Red Cross','1199','cross',1],['E-Plus ambulance (Red Cross)','1514','ambulance',0],['Gender-based violence helpline','1195','heart-handshake',1],['Child helpline','116','baby',1]]},
+  TZ:{name:'Tanzania',lines:[['Police','112','shield',1],['Fire and rescue','114','flame',1],['Ambulance','115','ambulance',1],['Child helpline','116','baby',1]]},
+  RW:{name:'Rwanda',lines:[['Police and fire','112','shield',1],['Ambulance (SAMU)','912','ambulance',1]]},
+  BI:{name:'Burundi',lines:[['Police','117','shield',1],['Fire','118','flame',1],['Ambulance','112','ambulance',1]]},
+  SS:{name:'South Sudan',lines:[['Police and emergencies','999 (some areas 112)','shield',1]]},
+  ET:{name:'Ethiopia',lines:[['Police','991','shield',1],['Ambulance','907','ambulance',1],['Fire','939','flame',1]]}};
+function helplines(){ const c=S.tabs.helpc||'UG'; const h=EA_HELP[c];
+  return `<div class="card mb"><div class="row between wrap"><h3 style="margin:0">${ic('phone-call')} Emergency helplines</h3><select class="inp" style="max-width:200px" aria-label="Country" onchange="S.tabs.helpc=this.value;save();rerender()">${Object.entries(EA_HELP).map(([k,v])=>`<option value="${k}" ${k===c?'selected':''}>${v.name}</option>`).join('')}</select></div>
+    <div class="grid g2 mt" style="gap:10px">${h.lines.map(([n,num,i,free])=>`<a class="help-line" href="tel:${num.split(' ')[0]}"><span class="ic ${free?'red':'blue'}">${ic(i)}</span><span class="grow"><b>${n}</b><small>${num}${free?' · free':''}</small></span>${ic('phone')}</a>`).join('')}</div>
+    <p class="small muted mt mb0">Numbers checked November 2026. Some numbers do not work on every network or in every area — save a second option. The hospital admin can update this list.</p></div>`; }
+['pub/emergency','pub/emergency-app'].forEach(k=>{ const o=R[k]; if(o) R[k]=(...a)=>{ const h=o(...a); const i=h.indexOf('</div></div>', h.indexOf('page-h')>-1?h.indexOf('page-h'):0); return h.includes('class="page-h"') ? h.replace(/(<div class="page-h">[\s\S]*?<\/div><\/div>)/, '$1'+helplines()) : `<section class="section"><div class="wrap">${helplines()}</div></section>`+h; }; });
+
+/* =================== 5. ambulance: free services first, clear prices, consent + payment before dispatch =================== */
+const ambQuote = (a, me_) => { const pr=S.ambPrice[a.branch]||{base:50000,km:3000}; const km=kmTo(me_,a); const als=/Advanced/.test(a.type)?20000:0; return {km, eta:Math.max(4,Math.round(km*2.4)), base:pr.base, perKm:pr.km, als, total:Math.round((pr.base+pr.km*km+als)/1000)*1000}; };
+R['p/ambulance'] = () => {
+  const act=S.ambRequests.find(r=>r.pid===ME && !['Completed','Cancelled'].includes(r.status)); if(act) return ambTrack(act);
+  const st=S.tabs.amb||(S.tabs.amb={}); const me_=myLoc(); const c=EA_HELP[S.tabs.helpc||'UG'];
+  const free=S.ambulances.filter(a=>a.status==='Available').map(a=>({a,...ambQuote(a,me_)})).sort((x,y)=>x.km-y.km);
+  const pick=free.find(x=>x.a.id===st.amb)||free[0];
+  if(pick && !st.dest) st.dest=pick.a.branch;
+  leaflet('ambmap',[me_.lat,me_.lng],12,[{lat:me_.lat,lng:me_.lng,color:'#E5484D',r:10,popup:'You'},...free.map(x=>({lat:x.a.lat,lng:x.a.lng,color:x===pick?'#1941BA':'#92BDF9',popup:x.a.plate+' · '+x.km+' km'}))]);
+  return ph('Get care', t('Ambulance')) + `
+  <div class="card mb amb-free"><h3 style="margin:0 0 4px">${ic('heart-handshake')} 1. Free emergency services — call first</h3><p class="small muted" style="margin:0 0 10px">These are free. Use them first if you cannot pay or need help at once.</p>
+    <div class="grid g2" style="gap:10px">${c.lines.filter(l=>l[3]).map(([n,num,i])=>`<a class="help-line" href="tel:${num.split(' ')[0]}"><span class="ic red">${ic(i)}</span><span class="grow"><b>${n}</b><small>${num} · free</small></span>${ic('phone')}</a>`).join('')}</div>
+    <p class="small muted mt mb0">Showing ${c.name}. <a href="#/app/p/sos">Other countries</a></p></div>
+  <div class="grid g-21"><div class="card"><h3>2. Hospital ambulance (paid)</h3>
+    <h4>What happened?</h4><div class="chips mb">${['Accident / injury','Labour / pregnancy','Can’t breathe','Unconscious / fainted','Chest pain','Fits','Bleeding a lot','Other'].map(x=>`<button class="chip ${st.reason===x?'on':''}" onclick="S.tabs.amb.reason='${x.replace(/'/g,'’')}';save();rerender()">${x}</button>`).join('')}</div>
+    <h4>Where are you?</h4><div class="row wrap mb"><div class="grow"><input class="inp" id="aaddr" value="${esc(me_.label)}" aria-label="Address or landmark"></div><button class="btn ghost" onclick="A.locate()">${ic('locate-fixed')} Use my phone’s location</button></div>
+    <div id="ambmap" class="map mb" style="height:220px;border-radius:12px"></div>
+    ${pick?`<h4>Nearest free ambulance</h4>
+    <div class="amb-offer"><div class="row between wrap"><div><b>${pick.a.plate}</b> · ${pick.a.type}<div class="small muted">${hosp(pick.a.branch)} · crew: ${pick.a.crew}</div></div><span class="badge green">Free now</span></div>
+      <div class="amb-facts"><div><small>Distance to you</small><b>${pick.km} km</b></div><div><small>Arrives in about</small><b>${pick.eta} min</b></div><div><small>Takes you to</small><b><select class="inp" id="adest" onchange="S.tabs.amb.dest=this.value;save()" style="padding:4px 6px;min-height:0">${S.branches.map(b=>`<option value="${b.id}" ${st.dest===b.id?'selected':''}>${hosp(b.id)}</option>`).join('')}</select></b></div></div>
+      <div class="amb-price"><div class="row between small"><span>Call-out fee</span><span>${ugx(pick.base)}</span></div><div class="row between small"><span>Distance ${pick.km} km × ${ugx(pick.perKm)}</span><span>${ugx(Math.round(pick.km*pick.perKm))}</span></div>${pick.als?`<div class="row between small"><span>Advanced life support crew</span><span>${ugx(pick.als)}</span></div>`:''}<div class="row between"><b>Total price</b><b>${ugx(pick.total)}</b></div></div>
+      ${free.length>1?`<details class="small mt"><summary>Choose a different ambulance</summary>${free.slice(1).map(x=>`<button class="btn sm ghost mt" style="margin-right:6px" onclick="S.tabs.amb.amb='${x.a.id}';S.tabs.amb.dest='${x.a.branch}';save();rerender()">${x.a.plate} · ${x.km} km · ${ugx(x.total)}</button>`).join('')}</details>`:''}
+    </div>
+    <label class="check mt" style="align-items:flex-start"><input type="checkbox" id="aconsent" ${st.ok?'checked':''} onchange="S.tabs.amb.ok=this.checked;save();rerender()"> <span class="small">I accept ambulance <b>${pick.a.plate}</b>, coming <b>${pick.km} km</b> to me and taking me to the hospital chosen above, for <b>${ugx(pick.total)}</b>. I agree to pay now.</span></label>
+    <button class="btn red lg block mt" ${st.reason&&st.ok?'':'disabled'} onclick="A.ambPayGo('${pick.a.id}')">${ic('siren')} Pay ${ugx(pick.total)} and send this ambulance</button>
+    <p class="small muted mt mb0">The ambulance is assigned only after you agree and pay. If you cannot pay, call a free service above.</p>`
+    :`<div class="note warn">${ic('alert-triangle')}<div>No hospital ambulance is free right now. Call a free emergency service above.</div></div>`}
+  </div>
+  <div class="col"><div class="card"><h3>Ambulance prices</h3><p class="small muted">Each hospital sets its own price.</p>${S.branches.map(b=>{ const p=S.ambPrice[b.id]||{base:50000,km:3000}; return `<div class="row between small" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${hosp(b.id)}</span><b>${ugx(p.base)} + ${ugx(p.km)}/km</b></div>`; }).join('')}<p class="small muted mt mb0">Advanced life support adds ${ugx(20000)}.</p></div>
+  <div class="card"><h3>While you wait</h3><div class="chips">${Object.keys(FIRST_AID).map(x=>`<button class="chip" onclick="A.firstAid('${x}')">${x}</button>`).join('')}</div></div></div></div>`; };
+A.ambPayGo = aid => { const st=S.tabs.amb; const a=S.ambulances.find(x=>x.id===aid); if(!a||a.status!=='Available') return toast('That ambulance was just taken. Showing the next nearest.','red'), rerender();
+  if(!st.ok) return toast('Please tick that you accept this ambulance and price','red');
+  const me_=myLoc(); const q=ambQuote(a,me_); const addr=($('#aaddr')||{}).value||me_.label; const dest=st.dest||a.branch;
+  A.pay(q.total,'Ambulance '+a.plate+' to '+hosp(dest),(ref,method)=>{
+    const r={id:uid('ER'),pid:ME,branch:a.branch,dest,reason:st.reason,addr,lat:me_.lat,lng:me_.lng,status:'Requested',at:new Date().toISOString(),fee:q.total,km:q.km,paid:true,payRef:ref,consent:{at:new Date().toISOString(),amb:a.plate,km:q.km,dest:hosp(dest),price:q.total}};
+    S.ambRequests.unshift(r); S.tabs.amb=null; S.tabs.lastAmb=r.id; audit('Ambulance paid and consented',r.id); save();
+    A.ambAssign(r.id,a.id,true); }); };
+
+/* =================== 6. doctor: fees, payouts, facility; prescriptions to pharmacy + patient; tests by department =================== */
+const feeRange = key => { const v=S.doctors.map(d=>d[key]).filter(Boolean).sort((a,b)=>a-b); return {min:v[0],max:v[v.length-1],mid:v[Math.floor(v.length/2)]}; };
+R['d/practice'] = () => { const d=doc(DID); const cr=feeRange('fee'), hr=feeRange('homeFee'); const f=d.facility; const po=d.payout||{type:'Mobile money',detail:''};
+  return ph('Account','Practice, fees and payouts') + `<div class="grid g2"><div class="card"><h3>${ic('building-2')} Where do you work?</h3>
+    <label class="check"><input type="radio" name="fac" id="facY" ${f?'checked':''} onchange="document.getElementById('facbox').hidden=false"> <span>At a hospital or clinic</span></label>
+    <label class="check"><input type="radio" name="fac" id="facN" ${f?'':'checked'} onchange="document.getElementById('facbox').hidden=true"> <span>Independently (no hospital or clinic)</span></label>
+    <div id="facbox" ${f?'':'hidden'}><div class="field mt"><label for="fname">Hospital or clinic name</label><input class="inp" id="fname" value="${esc(f?f.name:'')}" placeholder="e.g. Mengo Hospital"></div><div class="field"><label for="farea">Area</label><input class="inp" id="farea" value="${esc(f?f.area:'')}" placeholder="e.g. Rubaga, Kampala"></div></div>
+    <div class="note mt">${ic('info')}<div>Inpatients, theatre and surgical operations, and births are offered by hospitals only. They appear on your screens only if you work at a hospital or clinic.</div></div></div>
+  <div class="card"><h3>${ic('banknote')} Your fees</h3><p class="small muted">What other doctors on MB Musawo charge:</p>
+    <div class="fee-range"><div><small>Consultation</small><b>${ugx(cr.min)} – ${ugx(cr.max)}</b><span class="small muted">most charge about ${ugx(cr.mid)}</span></div><div><small>Home visit</small><b>${ugx(hr.min)} – ${ugx(hr.max)}</b><span class="small muted">most charge about ${ugx(hr.mid)}</span></div></div>
+    <div class="grid g2 mt" style="gap:10px"><div class="field"><label for="dfee">Your consultation fee (UGX)</label><input class="inp" id="dfee" type="number" min="0" step="1000" value="${d.fee}"></div><div class="field"><label for="dhfee">Your home-visit fee (UGX)</label><input class="inp" id="dhfee" type="number" min="0" step="1000" value="${d.homeFee}"></div></div>
+    <h3 class="mt">${ic('wallet')} Where you receive payment</h3>
+    <div class="field"><label for="ptype">Payout account</label><select class="inp" id="ptype">${['Mobile money','Bank','App wallet'].map(x=>`<option ${po.type===x?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="field"><label for="pdet">Account details</label><input class="inp" id="pdet" value="${esc(po.detail||'')}" placeholder="MTN/Airtel number, or bank name and account number"></div>
+    <p class="small muted">When a patient pays your fee, the money goes to this account after the MB Musawo service charge.</p>
+    <button class="btn" onclick="A.savePractice()">${ic('save')} Save</button></div></div>`; };
+A.savePractice = () => { const d=S.doctors.find(x=>x.id===DID); const yes=$('#facY').checked; const fee=+$('#dfee').value, hf=+$('#dhfee').value;
+  if(yes && (!$('#fname').value.trim()||!$('#farea').value.trim())) return toast('Enter the hospital or clinic name and area','red');
+  if(!(fee>0)||!(hf>0)) return toast('Enter both fees','red');
+  d.facility = yes ? {name:$('#fname').value.trim(), area:$('#farea').value.trim()} : null; d.fee=fee; d.homeFee=hf; d.payout={type:$('#ptype').value, detail:$('#pdet').value.trim()};
+  audit('Doctor practice details updated',DID); save(); toast('Saved. '+(yes?'Hospital services are on your menu.':'Hospital-only services are hidden from your menu.'),'green'); rerender(); };
+NAV.d.push(['Account',[['practice','Practice, fees & payouts','briefcase-medical']]]);
+const HOSP_ONLY_D = new Set(['wards','theatre','imaging']);
+const _NAVd = JSON.parse(JSON.stringify(NAV.d));
+function applyDoctorMenu(){ const has=!!(doc(DID)||{}).facility; NAV.d.length=0; _NAVd.forEach(([g,items])=>{ const it=items.filter(i=>has||!HOSP_ONLY_D.has(i[0])); if(it.length) NAV.d.push([g,it]); }); }
+HOSP_ONLY_D.forEach(k=>{ const o=R['d/'+k]; if(o) R['d/'+k]=(...a)=> doc(DID).facility ? o(...a) : ph('Hospital','Hospital services')+`<div class="card empty"><div class="ic blue" style="width:56px;height:56px;margin:0 auto">${ic('building-2')}</div><h3 class="mt">Only for doctors at a hospital or clinic</h3><p class="muted">Inpatients, theatre and surgical operations, and births are offered by hospitals only. Add your hospital or clinic to use this.</p><a class="btn" href="#/app/d/practice">Add my hospital or clinic</a></div>`; });
+
+/* prescription: where it goes — doctor and patient can both choose the pharmacy; the patient is always notified */
+{ const o=R['d/rx']; R['d/rx']=(...a)=>{ const h=o(...a); const sel=S.tabs.rxph||'patient';
+  const box=`<div class="card mt"><h3>${ic('send')} Where should this prescription go?</h3><p class="small muted">The patient always gets a copy and a notification. They can change the pharmacy.</p>
+    <select class="inp" id="rxph" onchange="S.tabs.rxph=this.value;save()"><option value="patient" ${sel==='patient'?'selected':''}>Let the patient choose the pharmacy</option>${S.pharmacies.map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${p.name} (${p.area})</option>`).join('')}</select></div>`;
+  return h.replace(/(<div class="grid g-21"><div class="card">)/, box.replace(' mt"',' mb"')+'$1'); }; }
+A.sendRx = pid => { const id=uid('RX'); const sel=S.tabs.rxph||'patient'; const ph_=S.pharmacies.find(p=>p.id===sel);
+  S.prescriptions.unshift({id,pid,did:DID,items:(S.tabs.rxi||[]).filter(i=>i.drug),at:new Date().toISOString(),status:ph_?'Sent to pharmacy and patient':'Sent to patient',filled:false,pharmacy:ph_?ph_.id:null,chosenBy:ph_?'Doctor':null});
+  S.tabs.rxi=null; audit('Prescription signed & sent',id);
+  notify(pid, ph_?`${doc(DID).name} sent prescription ${id} to ${ph_.name}. You can keep this pharmacy or choose another.`:`${doc(DID).name} sent you prescription ${id}. Choose a pharmacy to get your medicine.`, '#/app/p/medicine','rx');
+  save(); toast(ph_?`${id} sent to ${ph_.name} and the patient (notified).`:`${id} sent to the patient (notified) to choose a pharmacy.`,'green'); rerender(); };
+
+/* lab request tests grouped by department */
+const DEPT_ORDER=['Haematology','Clinical chemistry','Microbiology','Parasitology','Immunology','Cytology','Imaging','Cardiology','Clinic'];
+const DEPT_LABEL={Immunology:'Immunology & serology',Clinic:'Clinic measurements'};
+{ const o=R['d/labreq']; R['d/labreq']=(...a)=>{ const h=o(...a); const sel=S.tabs.lrsel||[];
+  const groups=DEPT_ORDER.map(dp=>[dp,S.tests.filter(t=>t.dept===dp)]).filter(g=>g[1].length);
+  const html=`<div class="lab-depts">${groups.map(([dp,ts])=>`<details ${['Haematology','Clinical chemistry','Microbiology'].includes(dp)?'open':''}><summary><b>${DEPT_LABEL[dp]||dp}</b> <span class="small muted">${ts.length} tests</span></summary>${ts.map(t=>`<label class="check"><input type="checkbox" ${sel.includes(t.code)?'checked':''} onchange="const s=S.tabs.lrsel=S.tabs.lrsel||[];this.checked?s.push('${t.code}'):s.splice(s.indexOf('${t.code}'),1);save()"> <span class="grow small">${t.name}</span><span class="small muted">${t.price?ugx(t.price):'Free'}</span></label>`).join('')}</details>`).join('')}</div>`;
+  return h.replace(/<div style="max-height:260px[^"]*">[\s\S]*?<\/div>/, html); }; }
+
+/* =================== 7. hospital-only services for patients =================== */
+const HOSP_SERVICES=[['Theatre and surgical operations','scissors'],['Births (maternity and delivery)','baby'],['Admission (inpatient wards)','bed-double'],['Blood transfusion','droplet'],['X-ray and ultrasound','scan-line']];
+R['p/hospital'] = () => { const me_=myLoc(); const hs=S.branches.map(b=>({b,km:kmTo(me_,b)})).sort((a,b)=>a.km-b.km);
+  return ph('Get care','Hospital services') + `<div class="note mb">${ic('info')}<div>These services are given only by hospitals — not by independent doctors, home care or pharmacies.</div></div>
+  <div class="grid g2">${hs.map(({b,km})=>`<div class="card"><div class="row"><span class="ic blue">${ic('hospital')}</span><div class="grow"><b>${hosp(b.id)}</b><div class="small muted">${b.city} · ${km} km</div></div></div><div class="chips mt">${HOSP_SERVICES.filter((s,i)=>b.beds>=10||i>2).map(([s,i])=>`<span class="chip">${ic(i)} ${s}</span>`).join('')}</div><div class="row wrap mt"><a class="btn sm" href="#/app/p/book">Book a visit</a><a class="btn sm ghost" href="#/app/p/maternal">Pregnancy & birth</a></div></div>`).join('')}</div>`; };
+{ const pi=NAV.p.find(g=>g[0]==='Care')||NAV.p[0]; if(!pi[1].find(i=>i[0]==='hospital')) pi[1].push(['hospital','Hospital services','hospital']); }
+{ const mh=NAV.p.find(g=>/health/i.test(g[0]))||NAV.p[1]; if(!mh[1].find(i=>i[0]==='offline')) mh[1].push(['offline','Saved for offline','download']); }
+
+/* =================== 8. pharmacy: wholesale only with a wholesale licence =================== */
+{ const o=R['ph/wholesale']; R['ph/wholesale']=(...a)=>{ const p=S.pharmacies[0]; const lic=S.tabs.noWholesale?null:p.whole;
+  const card=`<div class="card mb"><h3>${ic('badge-check')} Licences</h3><div class="grid g2" style="gap:10px"><div><small class="muted">Retail pharmacy licence</small><div><b>${p.retail}</b> <span class="badge green">Valid</span></div></div><div><small class="muted">Wholesale licence</small><div>${lic?`<b>${lic}</b> <span class="badge green">Valid</span>`:'<span class="badge red">None on file</span>'}</div></div></div>
+    <label class="check mt small"><input type="checkbox" ${S.tabs.noWholesale?'checked':''} onchange="S.tabs.noWholesale=this.checked;save();rerender()"> Show what a pharmacy without a wholesale licence sees</label></div>`;
+  if(!lic) return ph('Pharmacy','Wholesale and bulk sales')+card+`<div class="card empty"><div class="ic red" style="width:56px;height:56px;margin:0 auto">${ic('lock')}</div><h3 class="mt">Wholesale and bulk sales are locked</h3><p class="muted">Only pharmacies with a valid National Drug Authority wholesale licence can buy or sell in bulk. Upload your licence to apply.</p><label class="btn">${ic('upload')} Upload wholesale licence<input type="file" hidden accept="image/*,application/pdf" onchange="toast('Licence received. The MB Musawo team checks it with the National Drug Authority within 2 working days.','green')"></label></div>`;
+  return o(...a).replace(/(<div class="page-h">[\s\S]*?<\/div><\/div>)/,'$1'+card); }; }
+S.pharmacies.forEach(p=>{ p.nda = !!p.whole || p.nda; });
+
+/* =================== 9. customer care: free online chat with the IT admin =================== */
+const ROLE_NAME = r => ({p:'Patient',d:'Doctor',n:'Nurse',l:'Laboratory',ph:'Pharmacy',hc:'Home care',am:'Ambulance team',c:'Hospital admin'})[r]||'User';
+R['common/care'] = () => { const m=me(); const mine=S.support.filter(s=>s.who===m.name); const cur=mine.find(s=>s.id===S.tabs.cc)||mine[0];
+  AFTER.push(()=>{ const c=$('#ccchat'); if(c) c.scrollTop=c.scrollHeight; });
+  return ph('Help','Customer care') + `<div class="note green mb">${ic('headset')}<div><b>Free online help, 7 days a week.</b> You are talking to the MB Musawo IT support team. Usually a reply within 5 minutes (07:00–22:00).</div></div>
+  <div class="grid g-21"><div class="card"><h3>${cur?esc(cur.topic):'Start a conversation'}</h3>
+    <div id="ccchat" class="cc-chat">${cur?cur.msgs.map(x=>`<div class="cc-msg ${x.from==='u'?'me':''}">${x.from==='s'?`<small>${x.name}</small>`:''}${esc(x.text)}<span>${fdt(x.at)}</span></div>`).join(''):'<p class="muted small">Tell us what is wrong. You can ask about payments, your account, the app not working, or anything else.</p>'}</div>
+    <form class="row mt" onsubmit="event.preventDefault();A.ccSend(this.t.value)"><input class="inp" name="t" id="cct" placeholder="Type your message" autocomplete="off" aria-label="Message"><button class="btn">${ic('send')} Send</button></form></div>
+  <div class="col"><div class="card"><h3>My conversations</h3>${mine.length?mine.map(s=>`<button class="li" style="width:100%;text-align:left;background:none;border:0;cursor:pointer" onclick="S.tabs.cc='${s.id}';save();rerender()"><div class="grow"><div class="t small">${esc(s.topic)}</div><div class="s">${s.id} · ${fdt(s.at)}</div></div><span class="badge ${s.status==='Open'?'amber':'green'}">${s.status}</span></button>`).join(''):'<p class="muted small">None yet.</p>'}<button class="btn sm ghost mt" onclick="S.tabs.cc='new';save();rerender()">${ic('plus')} New conversation</button></div>
+  <div class="card"><h3>Other ways</h3><p class="small">WhatsApp and phone: <b>+256 700 000 000</b> (placeholder)</p><p class="small mb0">Email: <b>support@mbmusawo.example</b></p></div></div></div>`; };
+A.ccSend = text => { text=(text||'').trim(); if(!text) return; const m=me(); let cur=S.support.find(s=>s.id===S.tabs.cc&&s.who===m.name);
+  if(!cur){ cur={id:'CC-'+(1002+S.support.length),who:m.name,role:ROLE_NAME(m.role),topic:text.slice(0,48),at:new Date().toISOString(),status:'Open',msgs:[]}; S.support.unshift(cur); S.tabs.cc=cur.id; }
+  cur.msgs.push({from:'u',text,at:new Date().toISOString()}); cur.status='Open'; save(); rerender();
+  if(cur.msgs.filter(x=>x.from==='s').length===0) setTimeout(()=>{ cur.msgs.push({from:'s',name:'Brian (IT support)',text:`Hello ${m.name.split(' ').slice(-1)[0]}, thank you for contacting MB Musawo. I have your message and I am looking into it now.`,at:new Date().toISOString()}); save(); if(location.hash.includes('/care')) rerender(); },2000); };
+R['a/support'] = () => { const cur=S.support.find(s=>s.id===S.tabs.acc)||S.support[0];
+  return ph('Administration','Customer care inbox') + `<div class="grid g-21"><div class="card">${cur?`<div class="row between wrap"><h3 style="margin:0">${esc(cur.topic)}</h3><span class="badge ${cur.status==='Open'?'amber':'green'}">${cur.status}</span></div><div class="small muted">${esc(cur.who)} · ${cur.role} · ${cur.id}</div>
+    <div class="cc-chat mt">${cur.msgs.map(x=>`<div class="cc-msg ${x.from==='s'?'me':''}">${x.from==='s'?`<small>${x.name}</small>`:''}${esc(x.text)}<span>${fdt(x.at)}</span></div>`).join('')}</div>
+    <form class="row mt" onsubmit="event.preventDefault();A.ccReply('${cur.id}',this.t.value)"><input class="inp" name="t" placeholder="Reply" aria-label="Reply"><button class="btn">${ic('send')} Reply</button></form>
+    <button class="btn sm ghost mt" onclick="(()=>{const c=S.support.find(x=>x.id==='${cur.id}');c.status='Solved';save();rerender();toast('Marked as solved','green')})()">Mark solved</button>`:'<p class="muted">No conversations.</p>'}</div>
+  <div class="card"><h3>Conversations</h3>${S.support.map(s=>`<button class="li" style="width:100%;text-align:left;background:none;border:0;cursor:pointer" onclick="S.tabs.acc='${s.id}';save();rerender()"><div class="grow"><div class="t small">${esc(s.who)} · ${s.role}</div><div class="s">${esc(s.topic)}</div></div><span class="badge ${s.status==='Open'?'amber':'green'}">${s.status}</span></button>`).join('')}</div></div>`; };
+A.ccReply = (id,text) => { text=(text||'').trim(); if(!text) return; const c=S.support.find(x=>x.id===id); c.msgs.push({from:'s',name:'IT support',text,at:new Date().toISOString()}); save(); rerender(); };
+['p','d','n','l','ph','hc','am','c'].forEach(r=>{ if(!NAV[r]) return; const last=NAV[r][NAV[r].length-1]; if(!NAV[r].some(g=>g[1].some(i=>i[0]==='care'))) last[1].push(['care','Customer care (free)','headset']); });
+if(NAV.a && !NAV.a[0][1].some(i=>i[0]==='support')) NAV.a[0][1].splice(1,0,['support','Customer care inbox','headset']);
+{ const g=_NAVd[_NAVd.length-1]; if(!g[1].some(i=>i[0]==='care')) g[1].push(['care','Customer care (free)','headset']); }
+
+/* =================== 10. business model: free for patients; providers pay to join =================== */
+NAV.p.forEach(g=>{ g[1]=g[1].filter(i=>i[0]!=='premium'); });
+R['p/premium'] = () => { setTimeout(()=>go('#/app/p/home'),0); return ''; };
+R['pub/plans'] = () => `<section class="section"><div class="wrap" style="max-width:1080px">
+  <div style="text-align:center"><div class="eyebrow">Pricing</div><h1 style="font-size:38px">Free for patients. Providers pay to join.</h1><p class="muted">Patients never pay a subscription — only for the care they choose. Doctors, laboratories, pharmacies, hospitals and ambulance services pay MB Musawo to join and use the platform. Prices below are placeholders for the pilot.</p></div>
+  <div class="grid g3 mt2">${[['Patients','Free','always',['Symptom check','Book doctors, labs, home visits','Medicines delivered','Ambulance requests','Records saved on the phone','Customer care']],
+    ['Doctors','UGX ___','per month',['Profile and online bookings','Set your own fees','Chat, call and video consultations','e-Prescriptions and lab requests','Payouts to bank, mobile money or wallet']],
+    ['Laboratories','UGX ___','per month',['Listed with your prices','Home sample collection requests','Results sent to patient and doctor','Quality control records']],
+    ['Pharmacies','UGX ___','per month',['Receive prescriptions and orders','Delivery requests','Stock and expiry tracking','Wholesale (licensed pharmacies only)']],
+    ['Hospitals & clinics','UGX ___','per branch / month',['Everything for staff and management','Wards, theatre, maternity','Ambulance fleet','Billing, insurance claims, reports']],
+    ['Ambulance services','UGX ___','per vehicle / month',['Paid requests with consent','Live tracking','Dispatch board']]]
+    .map(([n,p,per,f],i)=>`<div class="price ${i===0?'best':''}"><h3>${n}</h3><div class="amt">${p}</div><div class="small muted">${per}</div><ul>${f.map(x=>`<li>${x}</li>`).join('')}</ul>${i===0?'<a class="btn block" href="#/register">Create free account</a>':'<a class="btn ghost block" href="#/contact">Join as a provider</a>'}</div>`).join('')}</div>
+  <p class="small muted mt" style="text-align:center">A small service charge may also apply to payments made through the app. Final prices to be agreed.</p></div></section>`;
+{ const o=R['pub/investors']; if(o) R['pub/investors']=(...a)=>o(...a).replace(/Free app \+ Premium \(UGX 50,000\/month\)[^<]*/,'Free for patients; they pay only for the care they choose.'); }
+
+/* keep the doctor menu right on every screen */
+{ const _render=render; window.render = render = function(){ try{ applyDoctorMenu(); }catch(e){} _render.apply(this,arguments); }; }
 
 </script>
 <script>render();</script>
