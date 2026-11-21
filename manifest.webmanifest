@@ -1,0 +1,25 @@
+{
+  "name": "MB Musawo",
+  "short_name": "MB Musawo",
+  "description": "your health companion",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F5F8FE",
+  "theme_color": "#04125C",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "id": "./",
+  "scope": "./",
+  "orientation": "any",
+  "lang": "en"
+}

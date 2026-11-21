@@ -7,6 +7,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="description" content="MB Musawo: patients, doctors, laboratories, pharmacies and home care in one platform for East Africa.">
 <meta name="theme-color" content="#04125C">
 <meta name="color-scheme" content="light dark">
@@ -975,6 +976,29 @@ h1, h2, h3, h4, .page-h h2, .hello h2, .modal-h h3, .price .amt, .card.stat .v, 
 .cc-msg{ align-self:flex-start; max-width:80%; background:var(--surface-2); border:1px solid var(--line); border-radius:14px 14px 14px 4px; padding:9px 12px; font-size:14px; overflow-wrap:anywhere; }
 .cc-msg.me{ align-self:flex-end; background:#1941BA; color:#fff; border-color:#1941BA; border-radius:14px 14px 4px 14px; }
 .cc-msg small{ display:block; font-weight:700; color:var(--soft-ink); font-size:11.5px; } .cc-msg span{ display:block; font-size:10.5px; opacity:.7; margin-top:3px; }
+
+/* ---------- version 6 ---------- */
+/* clarity: stronger grey text for contrast (meets WCAG AA on white) */
+:root{ --muted:#5E6A82; }
+:root[data-theme="dark"]{ --muted:#9AA7C0; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --muted:#9AA7C0; } }
+.small, small{ font-size:13.5px; }
+.side .nav-sec.fold{ cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; }
+.side .nav-sec.fold::after{ content:"+"; font-size:15px; font-weight:700; opacity:.7; }
+.side .nav-sec.fold.fold-open::after{ content:"–"; }
+.side .nav-sec.fold:focus-visible{ outline:2px solid #92BDF9; outline-offset:2px; border-radius:6px; }
+.consent-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+.consent-row .grow{ display:flex; flex-direction:column; gap:2px; min-width:0; } .consent-row small{ color:var(--muted); }
+.consent-box{ background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-top:6px; }
+.join-steps{ display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; }
+.join-steps span{ font-size:12.5px; font-weight:700; padding:6px 10px; border-radius:999px; background:var(--surface-2); color:var(--muted); border:1px solid var(--line); }
+.join-steps span.on{ background:#1941BA; color:#fff; border-color:#1941BA; } .join-steps span.done{ color:#0B7A54; border-color:#B9E5D2; background:#E5F5EE; }
+.kanban-on{ display:grid; grid-template-columns:repeat(5,minmax(220px,1fr)); gap:12px; overflow-x:auto; padding-bottom:6px; }
+.kanban-on .kcol{ background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:10px; min-width:0; }
+.kanban-on .kh{ font-weight:700; font-size:13.5px; display:flex; justify-content:space-between; margin-bottom:8px; }
+.kanban-on .kcard{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px; box-shadow:var(--card-sh); }
+.card .row > .grow{ min-width:0; overflow-wrap:anywhere; } .grid > .card{ min-width:0; }
+.integ-h{ flex-wrap:wrap; } .integ-h .grow{ flex:1 1 160px; }
 
 </style>
 </head>
@@ -4158,6 +4182,190 @@ R['pub/plans'] = () => `<section class="section"><div class="wrap" style="max-wi
 
 /* keep the doctor menu right on every screen */
 { const _render=render; window.render = render = function(){ try{ applyDoctorMenu(); }catch(e){} _render.apply(this,arguments); }; }
+
+</script>
+<script>
+/* MB Musawo — version 6: production foundations and clarity pass
+   1 offline for clinics (automatic detection, sync screen)  2 consent, break-glass access, Uganda DPPA 2019
+   3 reminders hub, family permissions  4 provider onboarding, memberships, revenue  5 integrations status
+   6 clarity: shorter patient menu, plain names, obvious main actions */
+
+function seedV6(){
+  if(S.v6) return; S.v6=1;
+  S.consent = S.consent || {care:true, share:true, reminders:true, emergency:true, stats:true, research:false};
+  S.consentLog = S.consentLog || [
+    {at:'2026-03-02T09:14:00.000Z', what:'Signed up and agreed to care and record keeping', by:'You (app)'},
+    {at:'2026-03-02T09:14:00.000Z', what:'Turned on SMS and WhatsApp reminders', by:'You (app)'},
+    {at:'2026-09-18T11:02:00.000Z', what:'Shared lab results with Dr. Ruth Nalwoga for 30 days', by:'You (app)'}];
+  S.remind = S.remind || {appt:['App','SMS'], meds:['App','SMS'], vacc:['App','SMS','WhatsApp'], results:['App'], refill:['App','SMS'], quiet:'21:00–06:00', lang:'English', copyTo:'Florence Nalubega'};
+  S.famPerm = S.famPerm || {'Florence Nalubega':{book:true,records:false,pay:true}, 'Baby Mukasa (expected)':{book:true,records:true,pay:true}};
+  S.breaches = S.breaches || [];
+  S.syncLog = S.syncLog || [{at:new Date(Date.now()-9e5).toISOString(), items:14, result:'All saved to the server'}, {at:new Date(Date.now()-8.64e7).toISOString(), items:63, result:'All saved — 1 change merged (two nurses edited the same vitals)'}];
+  S.members = S.members || [
+    {org:'MB Musawo Hospital network (6 branches)',type:'Hospital & clinics',plan:'Per branch',price:1800000,units:6,status:'Paid',next:'2026-12-01',auto:'MTN MoMo'},
+    {org:'Lakeside Diagnostics',type:'Laboratory',plan:'Laboratory',price:450000,units:1,status:'Paid',next:'2026-12-01',auto:'Bank'},
+    {org:'Musawo Pharmacy Ntinda',type:'Pharmacy',plan:'Pharmacy',price:250000,units:1,status:'Paid',next:'2026-12-01',auto:'Airtel Money'},
+    {org:'Kira Health Pharmacy',type:'Pharmacy',plan:'Pharmacy',price:250000,units:1,status:'Overdue',next:'2026-11-01',auto:'—'},
+    {org:'Dr. Agnes Auma',type:'Doctor',plan:'Doctor',price:100000,units:1,status:'Paid',next:'2026-12-01',auto:'MTN MoMo'},
+    {org:'Dr. Henry Byaruhanga',type:'Doctor',plan:'Doctor',price:100000,units:1,status:'Trial',next:'2026-12-15',auto:'—'},
+    {org:'Rapid Response Ambulances',type:'Ambulance service',plan:'Per vehicle',price:150000,units:4,status:'Paid',next:'2026-12-01',auto:'Bank'},
+    {org:'Gulu Lakeview Laboratory',type:'Laboratory',plan:'Laboratory',price:450000,units:1,status:'Overdue',next:'2026-11-05',auto:'—'}];
+  S.onboard = S.onboard || [
+    {org:'St. Francis Hospital Nsambya (pilot)',district:'Kampala',stage:3,contact:'Sr. Mary Nakimuli',beds:120,checks:[1,1,1,0,0]},
+    {org:'Hope Medical Centre',district:'Wakiso',stage:1,contact:'Dr. Paul Ochieng',beds:24,checks:[1,0,0,0,0]},
+    {org:'Mbale Family Clinic',district:'Mbale',stage:4,contact:'Grace Wanyama',beds:10,checks:[1,1,1,1,0]},
+    {org:'Kabale Community Hospital',district:'Kabale',stage:0,contact:'Dr. Ivan Tumusiime',beds:60,checks:[0,0,0,0,0]}];
+  save();
+}
+seedV6();
+{ const rd=A.resetDemo; A.resetDemo=()=>{ rd(); seedV6(); }; }
+
+/* =================== 1. offline for clinics =================== */
+/* the app follows the real connection: no button needed */
+window.addEventListener('offline', ()=>{ S.offline=true; save(); toast('No internet. Keep working — everything is saved on this device and will sync later.','blue'); rerender(); });
+window.addEventListener('online', ()=>{ const n=(S.outbox||[]).length; S.offline=false; S.syncLog.unshift({at:new Date().toISOString(), items:n, result:n?'All saved to the server':'Nothing waiting'}); S.outbox=[]; save(); toast(n?`Back online — ${n} saved change${n>1?'s':''} sent to the server.`:'Back online.','green'); rerender(); });
+if(navigator.onLine===false){ S.offline=true; }
+R['common/sync'] = () => { const q=S.outbox||[]; const kb=Math.round(JSON.stringify(S).length/1024);
+  return ph('Help','Offline and sync') + `<div class="note ${S.offline?'warn':'green'} mb">${ic(S.offline?'wifi-off':'wifi')}<div>${S.offline?'<b>No internet right now.</b> Keep working. Registrations, vitals, notes, prescriptions and payments taken in cash are saved on this device and sent when the internet returns.':'<b>Online.</b> Changes are saved to the server straight away. If the internet goes, the app keeps working on its own.'}</div></div>
+  <div class="grid g3 mb">${stat('Waiting to sync',q.length,'upload-cloud','blue')}${stat('Saved on this device',kb+' KB','hard-drive','teal')}${stat('Last sync',S.syncLog[0]?fdt(S.syncLog[0].at):'—','refresh-cw','green')}</div>
+  <div class="grid g2"><div class="card"><h3>Waiting to be sent</h3>${q.length?q.map(x=>`<div class="li"><span class="ic blue">${ic('clock')}</span><div class="grow"><div class="t small">${esc(x.type||x.kind||'Change')}</div><div class="s">${esc(x.text||x.note||x.id||'')}</div></div></div>`).join(''):'<p class="muted small">Nothing waiting. Everything is on the server.</p>'}
+    <button class="btn mt" ${S.offline||!q.length?'disabled':''} onclick="dispatchEvent(new Event('online'))">${ic('refresh-cw')} Sync now</button></div>
+  <div class="card"><h3>What works without internet</h3><ul class="small t2" style="padding-left:18px;margin:0"><li>Patient registration, search and records already on this device</li><li>Triage, vital signs, notes and ward rounds</li><li>Prescriptions and lab requests (sent when back online)</li><li>Cash payments with printed receipts</li><li>Bed board and duty roster</li></ul>
+    <h4 class="mt">Needs internet</h4><ul class="small t2" style="padding-left:18px;margin:0"><li>Mobile money and card payments</li><li>Video consultations</li><li>Ambulance live tracking</li></ul>
+    <p class="small muted mt mb0">If two people change the same record while offline, both versions are kept and the newest is shown; the older one stays in the history.</p></div></div>
+  <div class="card mt"><h3>Sync history</h3>${S.syncLog.slice(0,6).map(s=>`<div class="row between small" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${fdt(s.at)}</span><span>${s.items} changes · ${esc(s.result)}</span></div>`).join('')}</div>`; };
+
+/* =================== 2. consent, break-glass, data protection =================== */
+const CONSENTS=[['care','Care and record keeping','Doctors, nurses and staff treating me can see and add to my record.',1],['share','Sharing with places I use','Hospitals, laboratories and pharmacies I choose can see what they need for my care.',0],['reminders','Reminders by SMS and WhatsApp','Messages never include health details.',0],['emergency','Emergency access','In an emergency, a doctor may open my record without asking. I am told afterwards and it is logged.',0],['stats','Ministry of Health reports','Only counts without names (for example “12 malaria cases this week”). Required by law.',1],['research','Medical research','My record, with my name removed, may be used in approved research.',0]];
+R['p/privacy'] = () => { const views=(S.audit||[]).filter(a=>a.obj===ME).slice(0,8);
+  return ph('My health','Privacy and consent') + `<div class="note mb">${ic('shield-check')}<div>Your health information is protected under Uganda’s <b>Data Protection and Privacy Act, 2019</b>. You decide who sees it, and you can change your mind at any time.</div></div>
+  <div class="grid g-21"><div class="card"><h3>What I agree to</h3>${CONSENTS.map(([k,t,d,req])=>`<label class="consent-row"><span class="grow"><b>${t}</b><small>${d}</small></span>${req?'<span class="badge">Required</span>':`<input type="checkbox" class="switch" ${S.consent[k]?'checked':''} onchange="A.consent('${k}',this.checked,'${t.replace(/'/g,'’')}')" aria-label="${t}">`}</label>`).join('')}
+    <div class="row wrap mt"><button class="btn ghost" onclick="A.myData()">${ic('download')} Download my data</button><button class="btn ghost" onclick="A.dsr('Correction')">${ic('pencil')} Ask to correct something</button><button class="btn ghost" onclick="A.dsr('Deletion')">${ic('trash-2')} Ask to delete my account</button></div>
+    <p class="small muted mt mb0">Medical records must be kept for a set number of years by law, so deleting an account closes it and removes contact details, but the clinical record is kept safely until that time ends.</p></div>
+  <div class="col"><div class="card"><h3>Who opened my record</h3>${views.length?views.map(v=>`<div class="li"><div class="grow"><div class="t small">${esc(v.actor)} · ${esc(v.role)}</div><div class="s">${esc(v.action)} · ${fdt(v.at)}</div></div>${v.ok===false?'<span class="badge red">Blocked</span>':''}</div>`).join(''):'<p class="muted small">Nobody has opened your record recently.</p>'}</div>
+  <div class="card"><h3>History of my choices</h3>${S.consentLog.slice(0,6).map(c=>`<div class="small" style="padding:5px 0;border-bottom:1px solid var(--line)"><b>${esc(c.what)}</b><div class="muted">${fdt(c.at)} · ${esc(c.by)}</div></div>`).join('')}</div></div></div>`; };
+A.consent = (k,v,t) => { S.consent[k]=v; S.consentLog.unshift({at:new Date().toISOString(), what:(v?'Turned on: ':'Turned off: ')+t, by:'You (app)'}); audit('Consent changed: '+k+'='+v, ME); save(); toast(v?'Turned on':'Turned off — this takes effect straight away','green'); rerender(); };
+A.myData = () => { const data={exported:new Date().toISOString(), patient:pat(ME), appointments:S.appointments.filter(a=>a.pid===ME), prescriptions:S.prescriptions.filter(r=>r.pid===ME), labOrders:(S.labOrders||[]).filter(o=>o.pid===ME), consent:S.consent, consentHistory:S.consentLog};
+  try{ const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='my-mb-musawo-data.json'; document.body.appendChild(a); a.click(); a.remove(); }catch(e){}
+  audit('Patient downloaded own data', ME); toast('Your data file is ready. It is also emailed to you within 30 days if you ask.','green'); };
+A.dsr = kind => modal(kind==='Correction'?'Ask to correct your record':'Ask to delete your account', `<div class="field"><label for="dsrt">${kind==='Correction'?'What is wrong?':'Why? (optional)'}</label><textarea class="inp" id="dsrt"></textarea></div><p class="small muted">We reply within 30 days, as the law requires.</p>`, `<button class="btn" onclick="A.dsrGo('${kind}')">Send request</button>`);
+A.dsrGo = kind => { closeModal(); audit('Data request: '+kind, ME); S.consentLog.unshift({at:new Date().toISOString(), what:'Sent a '+kind.toLowerCase()+' request', by:'You (app)'}); save(); toast('Request sent. Reference DSR-'+(32+S.consentLog.length)+'. We reply within 30 days.','green'); rerender(); };
+
+/* consent choices at sign-up */
+{ const o=R['auth/register']; R['auth/register']=(...a)=>o(...a).replace(/<label class="check"><input type="checkbox" required>[\s\S]*?<\/label>/, `<div class="consent-box"><b>Your privacy</b><p class="small" style="margin:4px 0 8px">MB Musawo keeps health information under Uganda’s Data Protection and Privacy Act, 2019. You can change these later in Privacy and consent.</p>
+  <label class="check"><input type="checkbox" required> <span class="small">I agree to the <a href="#/terms">terms</a> and to MB Musawo keeping my health record for my care (<a href="#/privacy">privacy policy</a>). <b>Required</b></span></label>
+  <label class="check"><input type="checkbox" checked> <span class="small">Send me reminders by SMS or WhatsApp (no health details in messages)</span></label>
+  <label class="check"><input type="checkbox" checked> <span class="small">Allow emergency access to my record if I cannot answer</span></label>
+  <label class="check"><input type="checkbox"> <span class="small">Allow my record, with my name removed, to be used in approved research</span></label>
+  <label class="check"><input type="checkbox"> <span class="small">I am registering a child under 18 and I am their parent or guardian</span></label></div>`); }
+
+/* break-glass emergency access for doctors */
+{ const o=patientFile; window.patientFile = patientFile = function(pid){ const h=o(pid); if(!/Access denied/.test(h)) return h;
+  return h + `<div class="card mt" style="border-color:rgba(229,72,77,.4)"><h3 style="color:var(--red)">${ic('siren')} Emergency access</h3><p class="small">Only if the patient cannot consent and delay would cause harm. Access lasts 24 hours, the patient is told, and the data protection officer reviews it.</p>
+    <div class="field"><label for="bgr">Reason</label><select class="inp" id="bgr"><option>Patient unconscious or unable to speak</option><option>Life-threatening emergency</option><option>Patient brought in by ambulance without ID</option></select></div>
+    <button class="btn red" onclick="A.breakGlass('${pid}')">${ic('lock-open')} Open record in an emergency</button></div>`; }; }
+A.breakGlass = pid => { const why=$('#bgr').value; S.shares.unshift({pidx:pid, to:[doc(DID).name], revoked:false, breakGlass:true, why, until:Date.now()+864e5, at:new Date().toISOString()});
+  audit('EMERGENCY ACCESS (break-glass): '+why, pid, false); notify(pid, `${doc(DID).name} opened your record in an emergency (${why}). Contact us if this was not expected.`, '#/app/p/privacy','info'); save(); toast('Emergency access granted for 24 hours. This is logged and reviewed.','red'); rerender(); };
+(S.shares||[]).forEach(s=>{ if(s.breakGlass && s.until<Date.now()) s.revoked=true; });
+
+/* data protection checklist and breach register for admins */
+{ const o=R['a/privacy']; R['a/privacy']=(...a)=>o(...a) + `<div class="grid g2 mt"><div class="card"><h3>${ic('list-checks')} Uganda DPPA 2019 checklist</h3>${[['Register with the Personal Data Protection Office (PDPO)',0],['Appoint a data protection officer',1],['Keep a register of what data is collected and why',1],['Data protection impact assessment for health data',0],['Patient consent recorded for every account',1],['Report breaches to the PDPO straight away',1],['Rules for sending data outside Uganda (hosting)',0],['Retention schedule for medical records',1],['Staff trained and access reviewed every 3 months',0]].map(([t,d])=>`<div class="row small" style="padding:6px 0;border-bottom:1px solid var(--line);gap:10px"><span class="badge ${d?'green':'amber'}">${d?'Done':'To do'}</span><span class="grow">${t}</span></div>`).join('')}</div>
+  <div class="card"><h3>${ic('alert-octagon')} Breach register</h3>${S.breaches.length?S.breaches.map(b=>`<div class="li"><div class="grow"><div class="t small">${esc(b.what)}</div><div class="s">${fdt(b.at)} · ${esc(b.people)} people · ${b.reported?'Reported to PDPO':'<b style="color:var(--red)">Report to PDPO now</b>'}</div></div></div>`).join(''):'<p class="muted small">No breaches recorded.</p>'}
+    <button class="btn red mt" onclick="A.breach()">${ic('plus')} Record a breach</button><p class="small muted mt mb0">The law requires the PDPO to be told immediately, and affected people to be informed.</p></div></div>`; }
+A.breach = () => modal('Record a data breach', `<div class="field"><label for="brw">What happened?</label><textarea class="inp" id="brw" placeholder="e.g. a staff phone with the app was stolen"></textarea></div><div class="field"><label for="brp">About how many people are affected?</label><input class="inp" id="brp" type="number" min="0" value="1"></div>`, `<button class="btn red" onclick="(()=>{const w=$('#brw').value.trim(); if(!w) return toast('Describe what happened','red'); S.breaches.unshift({at:new Date().toISOString(),what:w,people:$('#brp').value,reported:false}); audit('Data breach recorded',w); save(); closeModal(); toast('Recorded. Next: report it to the PDPO and tell the people affected.','red'); rerender();})()">Save</button>`);
+
+/* =================== 3. reminders hub and family permissions =================== */
+R['p/reminders'] = () => { const nowA=S.appointments.filter(a=>a.pid===ME && new Date(a.at)>Date.now() && !['Cancelled','Done'].includes(a.status)).sort((a,b)=>new Date(a.at)-new Date(b.at));
+  const items=[...nowA.slice(0,3).map(a=>['appt','calendar',`${doc(a.did).name} — ${a.type}`,fdt(a.at)]),
+    ...(S.medPlan||[]).map(m=>['meds','pill',m.name,`${m.freq} at ${m.time}`]),
+    ...(S.medPlan||[]).filter(m=>m.left<=7).map(m=>['refill','refresh-cw',`Refill: ${m.name}`,`${m.left} days left`]),
+    ['vacc','syringe','Baby Mukasa — BCG and polio (at birth)','Due at birth · then 6, 10, 14 weeks'],
+    ['results','file-check','Lab results ready','You are told as soon as results are signed']];
+  const ch=['App','SMS','WhatsApp','Voice call'];
+  const KIND={appt:'Appointments',meds:'Medicines',refill:'Refills',vacc:'Vaccinations',results:'Results'};
+  return ph('My health','Reminders') + `<div class="grid g-21"><div class="card"><h3>Coming up</h3>${items.map(([k,i,t,d])=>`<div class="li"><span class="ic blue">${ic(i)}</span><div class="grow"><div class="t small">${esc(t)}</div><div class="s">${esc(d)}</div></div><span class="badge">${(S.remind[k]||[]).join(' · ')||'Off'}</span></div>`).join('')}
+    <div class="row wrap mt"><a class="btn" href="#/app/p/meds">${ic('plus')} Add a medicine reminder</a><a class="btn ghost" href="#/app/p/book">Book a visit</a></div></div>
+  <div class="card"><h3>How I get reminders</h3>${Object.entries(KIND).map(([k,l])=>`<div class="mb"><div class="small" style="font-weight:700">${l}</div><div class="chips">${ch.map(c=>`<button class="chip ${(S.remind[k]||[]).includes(c)?'on':''}" onclick="A.remCh('${k}','${c}')">${c}</button>`).join('')}</div></div>`).join('')}
+    <div class="field"><label for="rq">Quiet hours (no messages)</label><input class="inp" id="rq" value="${S.remind.quiet}" onchange="S.remind.quiet=this.value;save()"></div>
+    <div class="field"><label for="rl">Language</label><select class="inp" id="rl" onchange="S.remind.lang=this.value;save()">${['English','Luganda','Kiswahili'].map(l=>`<option ${S.remind.lang===l?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="rc">Also send a copy to</label><select class="inp" id="rc" onchange="S.remind.copyTo=this.value;save()"><option value="">Nobody</option>${(S.family||[]).filter(f=>f.rel!=='You').map(f=>`<option ${S.remind.copyTo===f.name?'selected':''}>${f.name}</option>`).join('')}</select></div>
+    <p class="small muted mb0">Messages only say things like “Time for your medicine” — never your illness.</p></div></div>`; };
+A.remCh = (k,c) => { const a=S.remind[k]=S.remind[k]||[]; const i=a.indexOf(c); i>=0?a.splice(i,1):a.push(c); save(); rerender(); };
+{ const o=R['p/family']; R['p/family']=(...a)=>o(...a) + `<div class="card mt"><h3>${ic('user-check')} What family members can do</h3><p class="small muted">Choose what each person can do for you. Children under 18 are managed by a parent or guardian.</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Book visits</th><th>See records</th><th>Pay bills</th></tr></thead><tbody>${(S.family||[]).filter(f=>f.rel!=='You').map(f=>{ const p=S.famPerm[f.name]||(S.famPerm[f.name]={book:false,records:false,pay:false}); return `<tr><td>${esc(f.name)}<div class="small muted">${esc(f.rel)}</div></td>${['book','records','pay'].map(k=>`<td><input type="checkbox" class="switch" ${p[k]?'checked':''} aria-label="${k}" onchange="S.famPerm['${f.name.replace(/'/g,'’')}'].${k}=this.checked;audit('Family permission changed','${k}');save();toast('Saved','green')"></td>`).join('')}</tr>`; }).join('')}</tbody></table></div></div>`; }
+
+/* =================== 4. provider onboarding, memberships, revenue =================== */
+const ON_STAGES=['Applied','Documents checked','Contract signed','Set-up and training','Live'];
+R['pub/join'] = () => { const s=S.tabs.join||(S.tabs.join={step:0,type:'Hospital or clinic'}); const T=['Hospital or clinic','Doctor','Laboratory','Pharmacy','Ambulance service'];
+  const steps=['Who you are','Details','Documents','Services and prices','Payment and plan','Check and send'];
+  const docsFor={ 'Hospital or clinic':['Ministry of Health facility licence','Certificate of incorporation','TIN certificate'], Doctor:['UMDPC practising licence','National ID'], Laboratory:['Allied Health Professionals Council licence','Facility licence'], Pharmacy:['National Drug Authority licence','Pharmacist in charge (PSU)','Wholesale licence (only for bulk sales)'], 'Ambulance service':['Vehicle registration','Ministry of Health ambulance certificate','Crew qualifications'] }[s.type];
+  const body=[
+    `<div class="grid g2" style="gap:10px">${T.map(x=>`<button class="role-card ${s.type===x?'on':''}" onclick="S.tabs.join.type='${x}';save();rerender()"><span class="ic blue">${ic({'Hospital or clinic':'hospital',Doctor:'stethoscope',Laboratory:'flask-conical',Pharmacy:'pill','Ambulance service':'ambulance'}[x])}</span><span>${x}</span></button>`).join('')}</div>`,
+    `<div class="grid g2" style="gap:10px">${[['Name of organisation or person',''],['District','Kampala'],['Physical address',''],['Contact person',''],['Phone',''],['Email',''],...(s.type==='Hospital or clinic'?[['Number of branches','1'],['Beds','']]:[]),['Registration or licence number','']].map(([l,v],i)=>`<div class="field"><label for="jf${i}">${l}</label><input class="inp" id="jf${i}" value="${v}"></div>`).join('')}</div>`,
+    `${docsFor.map((d,i)=>`<div class="li"><span class="ic blue">${ic('file-text')}</span><div class="grow"><div class="t small">${d}</div><div class="s">PDF or photo</div></div><label class="btn sm ghost">${ic('upload')} Upload<input type="file" hidden accept=".pdf,image/*" onchange="this.parentNode.outerHTML='<span class=&quot;badge green&quot;>Uploaded</span>'"></label></div>`).join('')}<p class="small muted mt">We check every licence with the council or authority that issued it.</p>`,
+    `<p class="small muted">Add your main services and prices. Patients always see the price before they book.</p>${(s.type==='Doctor'?[['Consultation','35000'],['Home visit','90000']]:s.type==='Laboratory'?[['Full blood count','15000'],['Malaria test','10000']]:s.type==='Pharmacy'?[['Delivery fee within 5 km','5000']]:s.type==='Ambulance service'?[['Call-out fee','50000'],['Per km','3000']]:[['Outpatient consultation','30000'],['Admission per day','80000'],['Normal delivery','250000']]).map(([n,p],i)=>`<div class="row" style="gap:8px;margin-bottom:8px"><input class="inp grow" value="${n}" aria-label="Service"><input class="inp" style="width:140px" type="number" value="${p}" aria-label="Price in UGX"></div>`).join('')}`,
+    `<div class="field"><label for="jpo">Where you receive payments</label><select class="inp" id="jpo"><option>MTN Mobile Money</option><option>Airtel Money</option><option>Bank account</option></select></div><div class="field"><label for="jpd">Account number or phone</label><input class="inp" id="jpd"></div><div class="note">${ic('info')}<div>Membership: <b>${s.type}</b> plan — first month free during the pilot, then monthly by mobile money or bank. Patients use the app free.</div></div>`,
+    `<p>Please check your details. After you send them, we check your documents within 2 working days and call you to sign the agreement and set up training.</p><label class="check"><input type="checkbox" id="jok"> <span class="small">I confirm the information is true and I agree to the provider terms and the data processing agreement.</span></label>`][s.step];
+  return `<section class="section"><div class="wrap" style="max-width:860px"><div class="eyebrow">Join MB Musawo</div><h1 style="font-size:34px">Join as a provider</h1>
+  <div class="join-steps">${steps.map((t,i)=>`<span class="${i<s.step?'done':i===s.step?'on':''}">${i+1}. ${t}</span>`).join('')}</div>
+  <div class="card mt">${body}<div class="row between mt">${s.step?`<button class="btn ghost" onclick="S.tabs.join.step--;save();rerender()">${ic('arrow-left')} Back</button>`:'<span></span>'}${s.step<5?`<button class="btn" onclick="S.tabs.join.step++;save();rerender()">Next ${ic('arrow-right')}</button>`:`<button class="btn" onclick="A.joinSend()">${ic('send')} Send application</button>`}</div></div></div></section>`; };
+A.joinSend = () => { if(!$('#jok').checked) return toast('Please tick the confirmation box','red'); const s=S.tabs.join; const name=s.type==='Doctor'?'New doctor application':'New '+s.type.toLowerCase();
+  S.applications.unshift({id:'APP-'+(62+S.applications.length),name,type:s.type==='Hospital or clinic'?'Hospital':s.type,country:'Uganda',docs:3,lic:'Pending check',at:new Date().toISOString(),status:'Pending'});
+  if(s.type==='Hospital or clinic') S.onboard.unshift({org:name,district:'Kampala',stage:0,contact:'—',beds:0,checks:[1,0,0,0,0]});
+  S.tabs.join=null; save(); toast('Application sent. We will call you within 2 working days.','green'); go('#/'); };
+
+R['sa/onboarding'] = () => `${ph('Business','Hospital onboarding')}<p class="small muted mb">Every new hospital moves through these steps before it goes live.</p>
+  <div class="kanban-on">${ON_STAGES.map((st,i)=>`<div class="kcol"><div class="kh">${st} <span class="badge">${S.onboard.filter(o=>o.stage===i).length}</span></div>${S.onboard.filter(o=>o.stage===i).map(o=>{ const k=S.onboard.indexOf(o); return `<div class="kcard"><b>${esc(o.org)}</b><div class="small muted">${esc(o.district)} · ${o.beds} beds · ${esc(o.contact)}</div>
+    <div class="small mt">${['Documents','Contract','Data agreement','Staff trained','Test payment'].map((c,j)=>`<label class="check" style="margin:2px 0"><input type="checkbox" ${o.checks[j]?'checked':''} onchange="S.onboard[${k}].checks[${j}]=this.checked?1:0;save()"> <span>${c}</span></label>`).join('')}</div>
+    ${i<4?`<button class="btn sm mt" onclick="S.onboard[${k}].stage++;audit('Onboarding stage moved','${esc(o.org)}');save();rerender()">Move to ${ON_STAGES[i+1]} ${ic('arrow-right')}</button>`:'<span class="badge green mt">Live</span>'}</div>`; }).join('')}</div>`).join('')}</div>`;
+
+R['sa/saas'] = () => { const M=S.members; const mrr=M.filter(m=>m.status!=='Trial').reduce((s,m)=>s+m.price*m.units,0); const overdue=M.filter(m=>m.status==='Overdue');
+  const types=[...new Set(M.map(m=>m.type))];
+  chart('revmix',{type:'bar',data:{labels:['Jun','Jul','Aug','Sep','Oct','Nov'],datasets:[{label:'Memberships',data:[8.2,9.1,10.4,11.6,12.9,mrr/1e6],backgroundColor:'#1941BA'},{label:'Service charges on payments',data:[1.1,1.4,1.9,2.3,2.8,3.2],backgroundColor:'#92BDF9'}]},options:{plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'UGX millions'}}}}});
+  return ph('Business','Memberships and revenue') + `<div class="note warn mb">${ic('info')}<div>Sample figures for the demonstration. Patients pay no subscription; providers pay a monthly membership.</div></div>
+  <div class="grid g4 mb">${stat('Monthly membership income',ugx(mrr),'banknote','blue')}${stat('Paying providers',M.filter(m=>m.status==='Paid').length+' of '+M.length,'building-2','teal')}${stat('Overdue',ugx(overdue.reduce((s,m)=>s+m.price*m.units,0)),'alert-triangle','red',overdue.length+' providers')}${stat('Service charges (Nov)',ugx(3200000),'percent','green','on app payments')}</div>
+  <div class="grid g-21"><div class="card"><h3>Revenue by month</h3><div style="height:260px"><canvas id="revmix"></canvas></div></div>
+  <div class="card"><h3>By provider type</h3>${types.map(t=>{ const v=M.filter(m=>m.type===t&&m.status!=='Trial').reduce((s,m)=>s+m.price*m.units,0); return `<div class="row between small" style="padding:7px 0;border-bottom:1px solid var(--line)"><span>${t}</span><b>${ugx(v)}</b></div>`; }).join('')}</div></div>
+  <div class="card mt"><div class="row between wrap"><h3 style="margin:0">Members and invoices</h3><a class="btn sm ghost" href="#/app/sa/onboarding">Hospital onboarding</a></div><div class="tbl-wrap mt"><table class="tbl"><thead><tr><th>Provider</th><th>Type</th><th>Plan</th><th>Monthly</th><th>Pays by</th><th>Next invoice</th><th>Status</th><th></th></tr></thead><tbody>${M.map((m,i)=>`<tr><td>${esc(m.org)}</td><td>${m.type}</td><td class="small">${m.plan}${m.units>1?' × '+m.units:''}</td><td>${ugx(m.price*m.units)}</td><td class="small">${m.auto}</td><td class="small">${m.next}</td><td><span class="badge ${m.status==='Paid'?'green':m.status==='Overdue'?'red':'blue'}">${m.status}</span></td><td>${m.status==='Overdue'?`<button class="btn sm" onclick="S.members[${i}].status='Paid';audit('Membership marked paid','${esc(m.org)}');save();toast('Marked as paid — receipt sent','green');rerender()">Mark paid</button> <button class="btn sm ghost" onclick="toast('Reminder sent by SMS and email','green')">Remind</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`; };
+
+/* =================== 5. integrations =================== */
+const INTEG=[['MTN Mobile Money','MTN MoMo Collections and Disbursements API','smartphone','Payments from patients and payouts to doctors','MTN MoMo merchant account, API user and key (sandbox first, then live)'],
+  ['Airtel Money','Airtel Money Open API (Uganda)','smartphone','Payments and payouts','Airtel Money merchant account and API credentials'],
+  ['Cards and banks','Card payments through a licensed payment gateway (for example Flutterwave or Pesapal)','credit-card','Visa, Mastercard and bank transfers','Gateway merchant account and keys'],
+  ['SMS and USSD','Africa’s Talking (SMS, USSD *xxx#, voice)','message-square','Reminders, codes, USSD menu for phones without data','Africa’s Talking account, sender ID and USSD short code from UCC'],
+  ['WhatsApp','WhatsApp Business Platform','message-circle','Reminders and receipts by WhatsApp','Verified business number and approved message templates'],
+  ['Ambulance live tracking','Crew phone GPS sent to the server in real time','ambulance','Live map for the patient and the dispatch desk','Crew app installed on each ambulance phone'],
+  ['Ministry of Health (DHIS2)','DHIS2 web API','bar-chart-3','Monthly HMIS reports sent automatically','DHIS2 user for each facility from the Ministry of Health'],
+  ['Insurance','Insurer claim portals or files','shield','Claims for insured patients','Agreement with each insurer']];
+R['a/integrations'] = () => ph('Administration','Connections (integrations)') + `<div class="note warn mb">${ic('info')}<div><b>In this demonstration, payments, SMS and ambulance tracking are simulated.</b> In the live system each connection runs on the MB Musawo server. Keys and passwords are kept on the server only — never in the app.</div></div>
+  <div class="grid g2">${INTEG.map(([n,api,i,use,need])=>`<div class="card"><div class="row integ-h"><span class="ic blue">${ic(i)}</span><div class="grow"><b>${n}</b><div class="small muted">${api}</div></div><span class="badge amber">Not connected</span></div><p class="small mt" style="margin-bottom:6px"><b>Used for:</b> ${use}</p><p class="small" style="margin:0"><b>Needed to connect:</b> ${need}</p></div>`).join('')}</div>`;
+if(NAV.a && !NAV.a[0][1].some(i=>i[0]==='integrations')) NAV.a[0][1].push(['integrations','Connections','plug']);
+if(NAV.sa){ const g=NAV.sa[0]; [['saas','Memberships & revenue','banknote'],['onboarding','Hospital onboarding','clipboard-check']].forEach(it=>{ const ex=g[1].find(i=>i[0]===it[0]); if(ex) ex[1]=it[1]; else g[1].push(it); }); }
+['c','n','d','l','ph'].forEach(r=>{ if(!NAV[r]) return; const last=NAV[r][NAV[r].length-1]; if(!NAV[r].some(g=>g[1].some(i=>i[0]==='sync'))) last[1].push(['sync','Offline and sync','refresh-cw']); });
+{ const g=_NAVd[_NAVd.length-1]; if(!g[1].some(i=>i[0]==='sync')) g[1].push(['sync','Offline and sync','refresh-cw']); }
+
+/* =================== 6. clarity pass for patients =================== */
+/* a short patient menu: the main things first, everything else under "More" */
+{ const all={}; NAV.p.forEach(([,items])=>items.forEach(i=>all[i[0]]=i));
+  const L=(k,label,icon)=>all[k]||label?[k,label||all[k][1],icon||(all[k]||[])[2]]:null;
+  const main=[['home','Home','home'],['consult','Talk to a doctor','stethoscope'],['book','Book appointment','calendar-plus'],['ambulance','Ambulance','ambulance'],['medicine','Medicines','pill'],['payments','Pay a bill','wallet']];
+  const health=[['records','My records','folder-heart'],['reminders','Reminders','bell-ring'],['family','My family','users'],['privacy','Privacy and consent','shield-check']];
+  const used=new Set([...main,...health].map(i=>i[0]));
+  const rename={assistant:'Check my symptoms',vitals:'My blood pressure and sugar',maternal:'Pregnancy and family planning',immunise:'Child vaccines',labrequests:'Lab tests',homevisit:'Nurse at home',appointments:'My appointments',messages:'Messages and photos',map:'Hospitals near me',queue:'Queue ticket',profile:'Medical profile',meds:'Medicine reminders',learn:'Health library',alerts:'Notifications',help:'Help',care:'Customer care (free)',offline:'Saved for offline',hospital:'Hospital services',receipts:'My receipts',settings:'Settings'};
+  const more=Object.values(all).filter(i=>!used.has(i[0])&&i[0]!=='premium').map(i=>[i[0],rename[i[0]]||i[1],i[2]]);
+  NAV.p.length=0; NAV.p.push(['Get care',main],['My health',health],['More',more]);
+  BNAV.p=[['home','Home','home'],['book','Book','calendar-plus'],['ambulance','Ambulance','ambulance'],['payments','Pay','wallet'],['settings','Me','user']]; }
+/* "More" and long staff groups start folded so the menu is short */
+const FOLD=new Set(['More','Clinical services','Operations','Supply & insight']);
+function foldMenu(){ document.querySelectorAll('.side .nav-sec').forEach(sec=>{ const name=sec.textContent.trim(); if(![...FOLD].some(f=>f.toLowerCase()===name.toLowerCase())) return;
+  const open=!!(S.tabs.fold||{})[name]; let el=sec.nextElementSibling; const kids=[]; while(el && !el.classList.contains('nav-sec')){ kids.push(el); el=el.nextElementSibling; }
+  if(kids.some(k=>k.classList.contains('on'))) { kids.forEach(k=>k.hidden=false); sec.classList.add('fold-open'); } else kids.forEach(k=>k.hidden=!open);
+  sec.classList.add('fold'); if(open) sec.classList.add('fold-open'); sec.setAttribute('role','button'); sec.tabIndex=0;
+  sec.onclick=()=>{ S.tabs.fold=S.tabs.fold||{}; S.tabs.fold[name]=!open; save(); rerender(); }; sec.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sec.onclick(); } }; }); }
+{ const _render=render; window.render = render = function(){ _render.apply(this,arguments); try{ foldMenu(); }catch(e){ console.error(e); } }; }
+/* home: "Pay a bill" replaces "My receipts" so the main money action is obvious */
+{ const o=R['p/home']; R['p/home']=(...a)=>o(...a).replace(/<a class="ph-svc " href="#\/app\/p\/receipts">[\s\S]*?<\/a>/, `<a class="ph-svc" href="#/app/p/payments"><span class="ph-ic">${ic('wallet')}</span><span class="ph-l">Pay a bill</span></a>`); }
+/* provider sign-up links go to the onboarding wizard */
+['pub/plans','pub/providers','pub/home'].forEach(k=>{ const o=R[k]; if(o) R[k]=(...a)=>o(...a).replace(/href="#\/contact"([^>]*)>(Join as a provider|Contact us|Talk to us)/g,'href="#/join"$1>Join as a provider'); });
 
 </script>
 <script>render();</script>
